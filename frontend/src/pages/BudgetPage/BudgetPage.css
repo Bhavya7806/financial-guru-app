@@ -1,0 +1,149 @@
+.budget-container {
+    padding: 1rem 0;
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  /* 1. HEADER */
+  .budget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 1.5rem;
+  }
+  
+  .budget-header h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--text-dark);
+  }
+  
+  .income-display {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text-light);
+  }
+  
+  .income-display span {
+    font-weight: 700;
+    color: var(--success-color);
+  }
+  
+  /* 2. BUDGET OVERVIEW */
+  .budget-overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .overview-stat {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-dark);
+  }
+  
+  /* 3. INTERACTIVE BUDGET ALLOCATOR */
+  .allocator-card {
+    background: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+    margin-bottom: 2rem;
+    overflow: hidden; /* To keep border-radius */
+  }
+  
+  .allocator-header,
+  .allocator-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 2fr 0.5fr;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    align-items: center;
+  }
+  
+  .allocator-header {
+    background: var(--bg-light);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-light);
+    text-transform: uppercase;
+  }
+  
+  .allocator-row {
+    border-bottom: 1px solid var(--border-color);
+  }
+  .allocator-row:last-child {
+    border-bottom: none;
+  }
+  
+  .allocator-row span {
+    font-size: 1rem;
+    color: var(--text-dark);
+  }
+  
+  .col-category {
+    font-weight: 600;
+  }
+  .col-spent {
+    color: var(--text-light);
+    font-weight: 500;
+  }
+  .col-budget {
+    font-weight: 500;
+  }
+  
+  .action-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+  }
+  .action-btn:hover {
+    opacity: 1;
+  }
+  
+  /* Re-using progress bar styles from ExpensesPage */
+  .progress-bar-container {
+    width: 100%;
+    height: 10px;
+    background-color: var(--border-color);
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.5s ease;
+  }
+  
+  
+  /* 4. SCENARIO PLANNER */
+  .scenario-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  
+  .scenario-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .scenario-text {
+    font-size: 1.1rem;
+    font-style: italic;
+    color: var(--text-light);
+  }
+  
+  .scenario-result {
+    font-size: 1.1rem;
+    color: var(--text-dark);
+  }
+  
+  .scenario-result strong {
+    color: var(--primary-color);
+  }

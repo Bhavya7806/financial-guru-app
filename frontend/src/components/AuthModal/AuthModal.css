@@ -1,0 +1,190 @@
+/* --- src/components/AuthModal/AuthModal.css --- */
+
+/* The full-screen overlay that blurs the background */
+.auth-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5); /* Dimming */
+    backdrop-filter: blur(5px); /* The blur effect */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000; /* Must be higher than navbar (100) */
+    animation: fadeIn 0.3s ease;
+  }
+  
+  /* The "black glass" form */
+  .auth-form-container {
+    position: relative;
+    width: 90%;
+    max-width: 420px;
+    padding: 2.5rem;
+    background: rgba(20, 20, 20, 0.7); /* Black, 70% transparent */
+    backdrop-filter: blur(10px); /* The "glass" effect */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    color: white;
+    animation: slideDown 0.4s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: transparent;
+    border: none;
+    color: #aaa;
+    font-size: 2.5rem;
+    font-weight: 300;
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+  
+  .close-btn:hover {
+    color: white;
+  }
+  
+  .auth-form-container h2 {
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .input-group {
+    margin-bottom: 1rem;
+  }
+  
+  .input-group label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: #eee;
+  }
+  
+  .input-group input {
+    width: 100%;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    color: white;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+  }
+  
+  .input-group input:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--primary-color);
+  }
+  
+  .input-group input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 30px rgba(0,0,0,0.3) inset !important;
+    -webkit-text-fill-color: white !important;
+  }
+  
+  .auth-btn {
+    width: 100%;
+    padding: 0.8rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, var(--primary-color), #0068d7);
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 86, 179, 0.3);
+    margin-top: 1rem;
+  }
+  
+  .auth-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 86, 179, 0.4);
+  }
+  
+  .divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #aaa;
+    margin: 1.5rem 0;
+  }
+  .divider::before,
+  .divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  .divider:not(:empty)::before {
+    margin-right: .5em;
+  }
+  .divider:not(:empty)::after {
+    margin-left: .5em;
+  }
+  
+  .google-btn {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background-color: white;
+    color: #333;
+    border: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+  
+  .google-btn:hover {
+    background-color: #f9f9f9;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+  }
+  
+  .google-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .toggle-view {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    color: #ccc;
+  }
+  
+  .toggle-view span {
+    color: var(--primary-color);
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  
+  .error-message {
+    color: #ff9a9a;
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid #ff9a9a;
+    padding: 0.75rem;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }

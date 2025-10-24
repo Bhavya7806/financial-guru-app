@@ -1,0 +1,92 @@
+/* --- src/components/AboutUs/AboutUs.css --- */
+
+.about-section {
+    padding: 4rem 2rem;
+    background: linear-gradient(180deg, var(--bg-white), #f7f9fb);
+  }
+  
+  .about-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 3rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .about-content {
+    flex: 1;
+    min-width: 300px;
+    max-width: 600px;
+    animation: slideIn 0.8s ease-in-out;
+  }
+  
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-30px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  
+  .about-content .section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 2rem;
+    text-align: left;
+    position: relative;
+  }
+  
+  .about-content .section-title::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -10px;
+    width: 60px;
+    height: 3px;
+    background: var(--secondary-color);
+    border-radius: 2px;
+  }
+  
+  .about-description {
+    font-size: 1rem;
+    color: var(--text-light);
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+  }
+  
+  .about-learn-more {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--secondary-color), #0f97a3);
+    color: white;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(19, 132, 150, 0.3);
+  }
+  
+  .about-learn-more:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(19, 132, 150, 0.4);
+  }
+  
+  .about-image-wrapper {
+    flex: 1;
+    min-width: 300px;
+    max-width: 500px;
+  }
+  
+  .about-image {
+    width: 100%;
+    height: auto;
+    border-radius: 14px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.1);
+    filter: brightness(1.03) contrast(1.05);
+    transition: transform 0.4s ease, filter 0.3s ease;
+  }
+  
+  .about-image:hover {
+    transform: scale(1.03);
+    filter: brightness(1.1);
+  }
+  

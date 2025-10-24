@@ -1,0 +1,9 @@
+# General ignores
+.DS_Store
+*.log
+
+# Ignore virtual env for Python
+ml-server/venv/
+
+# Optional: Ignore IDE specific files
+.vscode/

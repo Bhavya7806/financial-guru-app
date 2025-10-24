@@ -1,0 +1,115 @@
+/* --- src/pages/DashboardPage/DashboardPage.css --- */
+
+.dashboard-container {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .dashboard-welcome {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 2rem;
+  }
+  
+  .dashboard-welcome .username {
+    color: var(--primary-color);
+  }
+  
+  /* The Dashboard Grid */
+  .dashboard-grid {
+    display: grid;
+    /* Creates a responsive grid: 
+       - 1 column on small screens
+       - 3 columns on large screens
+    */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  /* This targets the NetWorthTrend card */
+  .net-worth-card {
+    /* Makes this card span all columns */
+    grid-column: 1 / -1; 
+  }
+  
+  
+  /* --- Styles for simple cards --- */
+  
+  /* Health Score Card */
+  .health-score-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 250px;
+  }
+  
+  .trophy {
+    font-size: 3rem;
+  }
+  
+  .score {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    line-height: 1;
+    margin-top: 0.5rem;
+  }
+  
+  .score .total {
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--text-light);
+    margin-left: 0.25rem;
+  }
+  
+  .score-trend {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 0.75rem;
+  }
+  
+  .score-trend.positive {
+    color: var(--success-color);
+  }
+  
+  /* Cash Flow Card */
+  .cash-flow-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.5rem;
+    min-height: 250px;
+  }
+  
+  .cash-flow-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.1rem;
+  }
+  
+  .cash-flow-item span {
+    color: var(--text-light);
+  }
+  
+  .cash-flow-item strong {
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+  
+  .cash-flow-item.income strong {
+    color: var(--success-color);
+  }
+  .cash-flow-item.expenses strong {
+    color: #DC3545; /* A red color */
+  }
+  .cash-flow-item.savings strong {
+    color: var(--primary-color);
+  }

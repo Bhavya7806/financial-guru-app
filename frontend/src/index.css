@@ -1,0 +1,54 @@
+/* --- src/index.css --- */
+
+/* Define Your Color Palette */
+:root {
+  --primary-color: #007BFF;   /* Medium Blue */
+  --secondary-color: #17A2B8; /* Medium Teal */
+  --text-dark: #343A40;       /* Dark Gray */
+  --text-light: #6C757D;      /* Light Gray */
+  --bg-light: #F8F9FA;       /* Lightest Gray */
+  --bg-white: #FFFFFF;
+  --border-color: #DEE2E6;
+  --success-color: #28A745;
+}
+
+/* Basic Resets */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-white);
+  color: var(--text-dark);
+}
+
+a {
+  text-decoration: none;
+  color: var(--primary-color);
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+}
+/* --- Add to src/index.css --- */
+
+.dashboard-layout {
+  display: flex;
+  width: 100%;
+}
+
+.main-content {
+  flex-grow: 1; /* Takes up remaining space */
+  padding: 2rem;
+  background-color: var(--bg-light);
+  min-height: calc(100vh - 70px); /* Full height minus navbar */
+}

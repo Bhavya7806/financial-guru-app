@@ -1,0 +1,77 @@
+/* --- src/components/Footer.css --- */
+
+.footer {
+    padding-top: 3rem;
+    background: linear-gradient(180deg, var(--text-dark), #111827);
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+  }
+  
+  .footer-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem 2rem 2rem;
+  }
+  
+  .footer h3,
+  .footer h4 {
+    color: white;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+  
+  .footer p {
+    line-height: 1.7;
+  }
+  
+  .footer-links ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .footer-links li {
+    margin-bottom: 0.75rem;
+  }
+  
+  .footer-links a {
+    color: rgba(255, 255, 255, 0.7);
+    transition: color 0.3s ease;
+    position: relative;
+  }
+  
+  .footer-links a::after {
+    content: "";
+    position: absolute;
+    bottom: -3px;
+    left: 0;
+    width: 0;
+    height: 1.5px;
+    background: var(--primary-color);
+    transition: width 0.3s ease;
+  }
+  
+  .footer-links a:hover {
+    color: var(--primary-color);
+  }
+  
+  .footer-links a:hover::after {
+    width: 100%;
+  }
+  
+  .footer-bottom {
+    padding: 1.5rem 2rem;
+    text-align: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.15);
+    font-weight: 500;
+  }
+  
+  .footer-bottom p {
+    line-height: 1.6;
+  }
+  
