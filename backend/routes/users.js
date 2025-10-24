@@ -3,37 +3,41 @@
 const express = require('express');
 const router = express.Router();
 const { db } = require('../index');
-// We will need authMiddleware if we re-add security
-// const authMiddleware = require('../middleware/auth');
+// const authMiddleware = require('../middleware/auth'); // If needed later
 
 /**
  * @route   GET /api/users/:userId
  * @desc    Get user profile data by ID
  * @access  Public (for now)
  */
-router.get('/:userId', async (req, res) => { // Using URL parameter for userId
+router.get('/:userId', async (req, res) => {
+  console.log(`-> HIT: GET /api/users/${req.params.userId}`);
   try {
     const userId = req.params.userId;
     if (!userId) {
-      return res.status(400).json({ msg: 'User ID is required' });
+      console.error("   GET User Error: User ID missing from URL parameters");
+      return res.status(400).json({ msg: 'User ID is required in the URL path' });
     }
 
     const userDocRef = db.collection('users').doc(userId);
+    console.log(`   Querying Firestore for user: ${userId}`);
     const docSnap = await userDocRef.get();
 
-    if (!docSnap.exists()) {
+    // Use .exists (property), not .exists() (function)
+    if (!docSnap.exists) {
+      console.warn(`   User document not found for ID: ${userId}`);
       return res.status(404).json({ msg: 'User not found' });
     }
 
-    // Return all user data (excluding sensitive fields if needed later)
+    console.log(`   User found for ID: ${userId}`);
+    // Return all user data
     res.json({ id: docSnap.id, ...docSnap.data() });
 
   } catch (err) {
-    console.error("Get User Error:", err.message);
-    res.status(500).send('Server Error');
+    console.error("!!! GET User Error in CATCH block:", err);
+    res.status(500).send('Server Error: Failed to retrieve user data.');
   }
 });
-
 
 /**
  * @route   POST /api/users/onboarding
@@ -41,7 +45,115 @@ router.get('/:userId', async (req, res) => { // Using URL parameter for userId
  * @access  Public
  */
 router.post('/onboarding', async (req, res) => {
-  // ... (This route remains the same)
+  console.log("-> HIT: POST /api/users/onboarding route");
+  try {
+    const { userId, selectedGoals, monthlyIncome, monthlyExpenses } = req.body;
+    console.log("   Received data:", { userId, selectedGoals, monthlyIncome, monthlyExpenses });
+
+    if (!userId || !selectedGoals || !monthlyIncome || !monthlyExpenses) {
+      console.error("   Validation failed: Missing data");
+      return res.status(400).json({ msg: 'Missing required onboarding data' });
+    }
+
+    const userDocRef = db.collection('users').doc(userId);
+
+    const onboardingData = {
+      financialGoals: selectedGoals,
+      monthlyIncome: parseFloat(monthlyIncome),
+      estimatedMonthlyExpenses: parseFloat(monthlyExpenses),
+      onboardingCompleted: true,
+      onboardingTimestamp: new Date().toISOString(),
+    };
+    console.log("   Prepared data for Firestore:", onboardingData);
+
+    console.log("   Attempting to save to Firestore...");
+    await userDocRef.set(onboardingData, { merge: true });
+    console.log("   Firestore save successful!");
+
+    console.log(`   Onboarding data saved for user: ${userId}`);
+    res.status(200).json({ msg: 'Onboarding data saved successfully' });
+
+  } catch (err) {
+    console.error("!!! Onboarding Save Error in CATCH block:", err);
+    res.status(500).send('Server Error: Failed to save onboarding data.');
+  }
+});
+
+/**
+ * @route   GET /api/users/:userId/recommendations
+ * @desc    Generate goal recommendations based on user income
+ * @access  Public (for now)
+ */
+router.get('/:userId/recommendations', async (req, res) => {
+  console.log(`-> HIT: GET /api/users/${req.params.userId}/recommendations`);
+  try {
+    const userId = req.params.userId;
+    if (!userId) {
+       console.error("   GET Recommendations Error: User ID missing");
+      return res.status(400).json({ msg: 'User ID is required' });
+    }
+
+    // 1. Fetch the user document
+    const userDocRef = db.collection('users').doc(userId);
+
+    console.log(`   Attempting Firestore query for doc: users/${userId}`);
+    const docSnap = await userDocRef.get();
+    console.log(`   Firestore query completed. Snapshot exists: ${docSnap.exists}`);
+
+    if (!docSnap.exists) {
+      console.warn(`   Returning 404 because docSnap.exists is false.`);
+      return res.status(404).json({ msg: 'User not found' });
+    }
+
+    const userData = docSnap.data();
+    const income = userData.monthlyIncome; // Get income from onboarding data
+    console.log(`   User income: ${income}`); // Log income
+
+    // 2. Generate Recommendations (Simple Logic V1)
+    const recommendations = [];
+
+    if (income && income > 0) {
+      // Recommend an Emergency Fund of 3 months' income
+      const emergencyFundTarget = income * 3;
+      recommendations.push({
+        title: "Emergency Fund",
+        target: emergencyFundTarget.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }),
+        priority: "High",
+        details: `Aim to save 3 months of your income (₹${emergencyFundTarget.toLocaleString('en-IN')}) for unexpected events.`
+      });
+
+      // Recommend starting Retirement savings (e.g., 10% of income)
+      const retirementSavings = income * 0.10;
+      recommendations.push({
+        title: "Retirement",
+        target: `${retirementSavings.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}/month`,
+        priority: "Medium",
+        details: `Start saving around 10% of your income (₹${retirementSavings.toLocaleString('en-IN')}/month) for the long term.`
+      });
+    } else {
+        console.log("   Income not found or zero, providing default recommendations."); // Log default case
+      // Default recommendations if income isn't set
+      recommendations.push({
+        title: "Emergency Fund",
+        target: "₹50,000", // Example default
+        priority: "High",
+        details: "Aim to save 3-6 months of essential expenses."
+      });
+       recommendations.push({
+        title: "Retirement",
+        target: "₹5,000/month", // Example default
+        priority: "Medium",
+        details: "Start saving consistently for the long term."
+      });
+    }
+
+    console.log(`   Generated recommendations for user: ${userId}`);
+    res.json(recommendations); // 3. Send recommendations back
+
+  } catch (err) {
+    console.error("!!! GET Recommendations Error:", err);
+    res.status(500).send('Server Error: Failed to generate recommendations.');
+  }
 });
 
 module.exports = router;

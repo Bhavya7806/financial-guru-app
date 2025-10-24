@@ -2,88 +2,111 @@ import React, { useState, useMemo, useEffect } from 'react';
 import './BudgetPage.css';
 import DashboardCard from '../../components/DashboardCard/DashboardCard';
 import axios from 'axios';
+import { auth } from '../../firebase'; // Import auth to get user ID
 
 // Define API endpoints
-const BUDGETS_API_URL = 'http://localhost:3001/api/budgets';
-const EXPENSES_API_URL = 'http://localhost:3001/api/expenses';
+// Define API endpoints
+const BUDGETS_API_URL = 'http://localhost:8081/api/budgets'; // Use new port 8081
+const EXPENSES_API_URL = 'http://localhost:8081/api/expenses'; // Use new port 8081
+const USER_API_URL = 'http://localhost:8081/api/users'; // Use new port 8081// Add User API URL
 
 const BudgetPage = () => {
-  // Set up states
   const [budgets, setBudgets] = useState([]);
   const [expenses, setExpenses] = useState([]);
-  const [income, setIncome] = useState(65000); // This can stay static for now
+  // Set income to null initially
+  const [income, setIncome] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(''); // Add error state
 
-  // Fetch data on load
+  // --- Updated useEffect Hook ---
   useEffect(() => {
-    const fetchData = async () => {
+    setError('');
+    setLoading(true); // Start loading
+
+    const fetchData = async (userId) => {
+      // Make sure userId is valid before proceeding
+      if (!userId) {
+        setError("User ID not found. Cannot fetch data.");
+        setLoading(false);
+        return;
+      }
+      
       try {
-        // Fetch both budgets and expenses at the same time
-        const [budgetsRes, expensesRes] = await Promise.all([
-          axios.get(BUDGETS_API_URL),
-          axios.get(EXPENSES_API_URL)
-        ]);
+        console.log(`Fetching data for user: ${userId}`); // Log the user ID
         
+        const [budgetsRes, expensesRes, userRes] = await Promise.all([
+          axios.get(BUDGETS_API_URL),
+          axios.get(EXPENSES_API_URL),
+          axios.get(`${USER_API_URL}/${userId}`) // Use the validated userId
+        ]);
+
         setBudgets(budgetsRes.data);
         setExpenses(expensesRes.data);
-        
+        // Set income from user data (use a default if not set)
+        setIncome(userRes.data.monthlyIncome || 0);
+
       } catch (err) {
         console.error("Error fetching data: ", err);
+        // Add more specific error for 404
+        if (err.response && err.response.status === 404) {
+             setError("User profile not found. Please complete onboarding.");
+        } else {
+             setError("Failed to load budget data. Please refresh.");
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, []);
+    // Use onAuthStateChanged to wait for Firebase auth state
+    const unsubscribe = auth.onAuthStateChanged(user => {
+      if (user) {
+        // User is logged in, now we can safely call fetchData
+        fetchData(user.uid); 
+      } else {
+        // User is logged out
+        setError("Please log in to view your budget.");
+        setBudgets([]); // Clear data
+        setExpenses([]);
+        setIncome(null);
+        setLoading(false);
+      }
+    });
 
-  // Calculate category totals (THIS IS THE CORRECTED LOGIC)
+    return () => unsubscribe(); // Cleanup listener on unmount
+
+  }, []); // Empty dependency array means this runs once on mount
+  // --- End of Updated useEffect Hook ---
+
+  // Calculate category totals (corrected logic)
   const categorySpending = useMemo(() => {
     const spending = {};
-    // Initialize all budget categories with 0 spending
     budgets.forEach(budget => {
       spending[budget.category] = 0;
     });
-
-    // Sum up expenses by mapping them to the correct budget category
     expenses.forEach(expense => {
       let budgetCategory;
+      if (expense.category === 'Food') budgetCategory = 'Food 🍕';
+      else if (expense.category === 'Housing') budgetCategory = 'Rent 🏠';
+      else if (expense.category === 'Transportation') budgetCategory = 'Transport 🚗';
+      else if (expense.category === 'Bills') budgetCategory = 'Bills 💼';
+      else if (expense.category === 'Entertainment') budgetCategory = 'Fun 🎉';
       
-      // Map expense categories to budget categories
-      if (expense.category === 'Food') {
-        budgetCategory = 'Food 🍕';
-      } else if (expense.category === 'Housing') {
-        budgetCategory = 'Rent 🏠'; // 'Housing' maps to 'Rent 🏠'
-      } else if (expense.category === 'Transportation') {
-        budgetCategory = 'Transport 🚗'; // 'Transportation' maps to 'Transport 🚗'
-      } else if (expense.category === 'Bills') {
-        budgetCategory = 'Bills 💼';
-      } else if (expense.category === 'Entertainment') {
-        budgetCategory = 'Fun 🎉'; // 'Entertainment' maps to 'Fun 🎉'
-      }
-      
-      // If we found a match and that budget exists, add the amount
       if (budgetCategory && spending[budgetCategory] !== undefined) {
         spending[budgetCategory] += expense.amount;
       }
     });
-
     return spending;
   }, [budgets, expenses]);
-
 
   // Calculate totals for the overview card
   const { totalPlanned, totalSpent, totalLeft } = useMemo(() => {
     const spendingBudgets = budgets.filter(b => !b.category.includes('Savings'));
-    
     const totalPlanned = spendingBudgets.reduce((acc, b) => acc + b.planned, 0);
-    
     const totalSpent = Object.keys(categorySpending)
       .filter(key => !key.includes('Savings'))
       .reduce((acc, key) => acc + categorySpending[key], 0);
-
     const totalLeft = totalPlanned - totalSpent;
-    
     return { totalPlanned, totalSpent, totalLeft };
   }, [budgets, categorySpending]);
 
@@ -91,14 +114,17 @@ const BudgetPage = () => {
   const getProgressColor = (spent, planned) => {
     if (planned === 0) return 'var(--border-color)';
     const percent = (spent / planned) * 100;
-    if (percent >= 100) return '#DC3545'; // Red (Overspent)
-    if (percent > 80) return '#FFC107'; // Yellow (Warning)
-    return 'var(--primary-color)'; // Green/Blue (Good)
+    if (percent >= 100) return '#DC3545'; // Red
+    if (percent > 80) return '#FFC107'; // Yellow
+    return 'var(--primary-color)'; // Blue/Green
   };
 
-  // Show loading state
+  // Show loading or error state
   if (loading) {
     return <div className="loading-container">Loading budgets...</div>;
+  }
+  if (error) {
+     return <div className="error-container">{error}</div>;
   }
 
   return (
@@ -107,7 +133,7 @@ const BudgetPage = () => {
       <header className="budget-header">
         <h1>Budget • {new Date().toLocaleString('default', { month: 'long' })} {new Date().getFullYear()}</h1>
         <div className="income-display">
-          Monthly Income: <span>₹{income.toLocaleString('en-IN')}</span>
+          Monthly Income: <span>₹{(income ?? 0).toLocaleString('en-IN')}</span>
         </div>
       </header>
 
@@ -144,7 +170,7 @@ const BudgetPage = () => {
         <div className="allocator-body">
           {budgets.map((budget) => {
             const spent = categorySpending[budget.category] || 0;
-            const planned = budget.planned || 0; // Ensure planned is not undefined
+            const planned = budget.planned || 0;
             const percent = planned > 0 ? (spent / planned) * 100 : 0;
             const isSavings = budget.category.includes('Savings');
             
@@ -153,7 +179,6 @@ const BudgetPage = () => {
                 <span className="col-category">{budget.category}</span>
                 <span className="col-budget">₹{planned.toLocaleString('en-IN')}</span>
                 <span className="col-spent">{isSavings ? '---' : `₹${spent.toLocaleString('en-IN')}`}</span>
-                
                 <span className="col-progress">
                   {!isSavings && (
                     <div className="progress-bar-container">
