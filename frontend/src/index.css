@@ -1,15 +1,17 @@
 /* --- src/index.css --- */
 
-/* Define Your Color Palette */
+/* Define Your New Violet Dark Theme Color Palette */
 :root {
-  --primary-color: #007BFF;   /* Medium Blue */
-  --secondary-color: #17A2B8; /* Medium Teal */
-  --text-dark: #343A40;       /* Dark Gray */
-  --text-light: #6C757D;      /* Light Gray */
-  --bg-light: #F8F9FA;       /* Lightest Gray */
-  --bg-white: #FFFFFF;
-  --border-color: #DEE2E6;
-  --success-color: #28A745;
+  --primary-color: #7B68EE;   /* Medium Slate Blue (Vibrant Accent) */
+  --secondary-color: #00FF7F; /* Spring Green (Success/Savings Accent) */
+  --accent-neon: #FF69B4;     /* Hot Pink (Optional secondary accent) */
+  --text-dark: #FFFFFF;       /* Pure White (For high contrast text/titles) */
+  --text-light: #C0C0C0;      /* Light Gray (For descriptive text) */
+  --bg-primary: #1C1929;      /* Deep Indigo/Violet (Main background) */
+  --bg-secondary: #2C293F;    /* Slightly Lighter Violet (Sidebar, Card Background) */
+  --border-color: #4A4563;    /* Soft Purple-Gray Border */
+  --success-color: #00FF7F;   /* Use secondary for success */
+  --danger-color: #DC3545;    /* Standard Red for danger/expenses */
 }
 
 /* Basic Resets */
@@ -25,8 +27,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--bg-white);
-  color: var(--text-dark);
+  background-color: var(--bg-primary); /* Main deep violet background */
+  color: var(--text-dark); /* Default text is white */
 }
 
 a {
@@ -39,7 +41,7 @@ button {
   border: none;
   font-family: inherit;
 }
-/* --- Add to src/index.css --- */
+/* --- Dashboard Layout --- */
 
 .dashboard-layout {
   display: flex;
@@ -47,8 +49,8 @@ button {
 }
 
 .main-content {
-  flex-grow: 1; /* Takes up remaining space */
+  flex-grow: 1;
   padding: 2rem;
-  background-color: var(--bg-light);
-  min-height: calc(100vh - 70px); /* Full height minus navbar */
+  background-color: var(--bg-primary); /* Content area background */
+  min-height: calc(100vh - 70px);
 }

@@ -1,51 +1,51 @@
+// --- src/components/SpendingPieChart/SpendingPieChart.jsx ---
+
 import React from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import DashboardCard from '../DashboardCard/DashboardCard';
 import './SpendingPieChart.css';
 
-// Remove mock data
-// const data = [ ... ]; 
-
-// Colors (can be static)
-const COLORS = ['#007BFF', '#17A2B8', '#FFC107', '#DC3545', '#28A745', '#6C757D', '#5A46FF'];
+// Using the new vibrant colors for the chart slices
+const COLORS = ['#00BFFF', '#FF69B4', '#00FF7F', '#1F334E', '#FFC107', '#DC3545', '#6C757D'];
 
 // Component now accepts 'data' prop
 const SpendingPieChart = ({ data }) => {
-  // If no data, show a message
-  if (!data || data.length === 0) {
+  
+  // Clean data: only render slices with a value > 0
+  const cleanData = data.filter(d => d.value > 0);
+
+  if (!cleanData || cleanData.length === 0) {
     return (
       <DashboardCard title="Spending Breakdown">
-         <div className="chart-placeholder">No spending data to display.</div>
+         <div className="chart-placeholder">No spending data to display.</div> 
       </DashboardCard>
     );
   }
 
   return (
-    // Ensure the DashboardCard style is defined in the placeholder CSS if using the placeholder
     <DashboardCard title="Spending Breakdown">
-      <div className="pie-chart-container">
-        <ResponsiveContainer width="100%" height={250}>
+      <div className="pie-chart-container"> 
+        <ResponsiveContainer width="100%" height={250}> 
           <PieChart>
             <Pie
-              data={data}
+              data={cleanData}
               cx="50%"
               cy="50%"
               outerRadius={80}
-              fill="#8884d8"
+              // The default fill is removed to rely solely on the vibrant Cell colors
               dataKey="value"
               labelLine={false}
               label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
             >
-              {data.map((entry, index) => (
-                // Use category name with emoji/icon if present, otherwise just name
+              {cleanData.map((entry, index) => (
                 <Cell 
-                   key={`cell-${index}`} 
+                   key={`cell-${entry.name}`} 
                    fill={COLORS[index % COLORS.length]} 
                 />
               ))}
             </Pie>
             <Tooltip 
-               formatter={(value) => `₹${value.toLocaleString('en-IN')}`} // Format tooltip value
+               formatter={(value) => [`₹${value.toLocaleString('en-IN')}`, 'Amount']} 
             />
             <Legend 
               iconType="circle"

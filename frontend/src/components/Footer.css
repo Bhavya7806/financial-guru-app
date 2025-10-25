@@ -1,11 +1,13 @@
 /* --- src/components/Footer.css --- */
 
 .footer {
-    padding-top: 3rem;
-    background: linear-gradient(180deg, var(--text-dark), #111827);
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 0.9rem;
-  }
+  padding-top: 3rem;
+  /* CHANGE: Use primary dark background */
+  background: var(--bg-primary); 
+  color: var(--text-light); /* Light gray text */
+  font-size: 0.9rem;
+  border-top: 1px solid var(--border-color);
+}
   
   .footer-container {
     display: flex;
@@ -19,10 +21,11 @@
   
   .footer h3,
   .footer h4 {
-    color: white;
+    /* CHANGE: Titles are pure white */
+    color: var(--text-dark); 
     font-weight: 700;
     margin-bottom: 1rem;
-  }
+}
   
   .footer p {
     line-height: 1.7;
@@ -39,11 +42,11 @@
   }
   
   .footer-links a {
-    color: rgba(255, 255, 255, 0.7);
+    /* CHANGE: Lighter link color */
+    color: var(--text-light); 
     transition: color 0.3s ease;
     position: relative;
-  }
-  
+}
   .footer-links a::after {
     content: "";
     position: absolute;
@@ -66,8 +69,8 @@
   .footer-bottom {
     padding: 1.5rem 2rem;
     text-align: center;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    background-color: rgba(0, 0, 0, 0.15);
+    border-top: 1px solid var(--border-color); 
+    background-color: var(--bg-primary);
     font-weight: 500;
   }
   

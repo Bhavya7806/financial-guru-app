@@ -2,45 +2,50 @@ import React, { useState, useMemo, useEffect } from 'react';
 import './BudgetPage.css';
 import DashboardCard from '../../components/DashboardCard/DashboardCard';
 import axios from 'axios';
-import { auth } from '../../firebase'; // Import auth to get user ID
-import EditBudgetModal from '../../components/EditBudgetModal/EditBudgetModal'; // Import the new modal
+import { auth } from '../../firebase'; 
+import EditBudgetModal from '../../components/EditBudgetModal/EditBudgetModal';
 
-// Define API endpoints (ensure port is correct, e.g., 8081)
-const BUDGETS_API_URL = 'http://localhost:8081/api/budgets';
-const EXPENSES_API_URL = 'http://localhost:8081/api/expenses';
-const USER_API_URL = 'http://localhost:8081/api/users';
+// Define API endpoints (ensure port is correct)
+const API_BASE_URL = 'http://localhost:8081/api';
+const BUDGETS_API_URL = `${API_BASE_URL}/budgets`;
+const EXPENSES_API_URL = `${API_BASE_URL}/expenses`;
+const USER_API_URL = `${API_BASE_URL}/users`;
 
 const BudgetPage = () => {
   const [budgets, setBudgets] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [income, setIncome] = useState(null);
+  // CRITICAL: New state for Estimated Expenses from onboarding
+  const [estimatedExpenses, setEstimatedExpenses] = useState(0); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  // State for the Edit Budget Modal
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [budgetToEdit, setBudgetToEdit] = useState(null); // State to hold the item being edited
+  const [budgetToEdit, setBudgetToEdit] = useState(null); 
 
-  // Fetch initial data (budgets, expenses, user income)
+  // Fetch initial data (budgets, expenses, user income, and estimate)
   useEffect(() => {
     setError('');
     setLoading(true);
+    const userId = auth.currentUser?.uid; 
 
-    const fetchData = async (userId) => {
-      if (!userId) {
-        setError("User ID not found. Cannot fetch data.");
-        setLoading(false);
-        return;
-      }
+    if (!userId) { setError("Please log in to view your budget."); setLoading(false); return; }
+
+    const fetchData = async () => {
       try {
-        console.log(`Fetching data for user: ${userId}`);
         const [budgetsRes, expensesRes, userRes] = await Promise.all([
-          axios.get(BUDGETS_API_URL),
-          axios.get(EXPENSES_API_URL),
+          axios.get(`${BUDGETS_API_URL}?userId=${userId}`),
+          axios.get(`${EXPENSES_API_URL}?userId=${userId}`),
           axios.get(`${USER_API_URL}/${userId}`)
         ]);
+        
+        const userData = userRes.data;
+        
         setBudgets(budgetsRes.data);
         setExpenses(expensesRes.data);
-        setIncome(userRes.data.monthlyIncome || 0);
+        setIncome(userData.monthlyIncome || 0);
+        // CRITICAL FIX: Set the estimated expenses state from user data
+        setEstimatedExpenses(userData.estimatedMonthlyExpenses || 0); 
+
       } catch (err) {
         console.error("Error fetching data: ", err);
         if (err.response && err.response.status === 404) {
@@ -48,24 +53,10 @@ const BudgetPage = () => {
         } else {
              setError("Failed to load budget data. Please refresh.");
         }
-      } finally {
-        setLoading(false);
-      }
+      } finally { setLoading(false); }
     };
-
-    const unsubscribe = auth.onAuthStateChanged(user => {
-      if (user) {
-        fetchData(user.uid);
-      } else {
-        setError("Please log in to view your budget.");
-        setBudgets([]);
-        setExpenses([]);
-        setIncome(null);
-        setLoading(false);
-      }
-    });
-    return () => unsubscribe();
-  }, []);
+    fetchData();
+  }, []); 
 
   // Calculate spending per category
   const categorySpending = useMemo(() => {
@@ -75,11 +66,12 @@ const BudgetPage = () => {
     });
     expenses.forEach(expense => {
       let budgetCategory;
-      if (expense.category === 'Food') budgetCategory = 'Food 🍕';
-      else if (expense.category === 'Housing') budgetCategory = 'Rent 🏠';
-      else if (expense.category === 'Transportation') budgetCategory = 'Transport 🚗';
-      else if (expense.category === 'Bills') budgetCategory = 'Bills 💼';
-      else if (expense.category === 'Entertainment') budgetCategory = 'Fun 🎉';
+      if (expense.category.includes('Food')) budgetCategory = 'Food 🍕'; 
+      else if (expense.category.includes('Housing')) budgetCategory = 'Rent 🏠';
+      else if (expense.category.includes('Transportation')) budgetCategory = 'Transport 🚗';
+      else if (expense.category.includes('Bills')) budgetCategory = 'Bills 💼';
+      else if (expense.category.includes('Entertainment')) budgetCategory = 'Fun 🎉';
+      
       if (budgetCategory && spending[budgetCategory] !== undefined) {
         spending[budgetCategory] += expense.amount;
       }
@@ -87,24 +79,30 @@ const BudgetPage = () => {
     return spending;
   }, [budgets, expenses]);
 
-  // Calculate overview totals
+  // Calculate overview totals (FINAL CORRECTED LOGIC)
   const { totalPlanned, totalSpent, totalLeft } = useMemo(() => {
-    const spendingBudgets = budgets.filter(b => !b.category.includes('Savings'));
-    const totalPlanned = spendingBudgets.reduce((acc, b) => acc + (b.planned || 0), 0); // Handle potential undefined planned
+    
+    // 1. CRITICAL FIX: Planned is the estimated total expenses from onboarding
+    const totalPlanned = estimatedExpenses; 
+
+    // 2. Calculate total spent (sum of all actual expenses excluding savings)
     const totalSpent = Object.keys(categorySpending)
       .filter(key => !key.includes('Savings'))
       .reduce((acc, key) => acc + categorySpending[key], 0);
+
+    // 3. Calculate left amount
     const totalLeft = totalPlanned - totalSpent;
+    
     return { totalPlanned, totalSpent, totalLeft };
-  }, [budgets, categorySpending]);
+  }, [estimatedExpenses, categorySpending]); 
 
   // Helper for progress bar color
   const getProgressColor = (spent, planned) => {
     if (!planned || planned === 0) return 'var(--border-color)';
     const percent = (spent / planned) * 100;
-    if (percent >= 100) return '#DC3545'; // Red
-    if (percent > 80) return '#FFC107'; // Yellow
-    return 'var(--primary-color)'; // Blue/Green
+    if (percent >= 100) return 'var(--danger-color)';
+    if (percent > 80) return '#FFC107'; 
+    return 'var(--primary-color)'; 
   };
 
   // --- Modal Handler Functions ---
@@ -119,27 +117,21 @@ const BudgetPage = () => {
   };
 
   const handleBudgetSaved = (updatedBudget) => {
-    // Update the budget list in the state
-    setBudgets(prevBudgets =>
-      prevBudgets.map(b =>
-        // Match by category OR id if available from backend response
+    // CRITICAL: Ensure a new array reference is created to trigger useMemo
+    setBudgets(prevBudgets => {
+      const newBudgets = prevBudgets.map(b => 
         (b.category === updatedBudget.category || b.id === updatedBudget.id)
-          ? { ...b, ...updatedBudget } // Merge updates, keep existing id if not in response
+          ? updatedBudget 
           : b
-      )
-    );
-    // Recalculations happen automatically via useMemo
+      );
+      return newBudgets;
+    });
   };
   // --- End Modal Handlers ---
 
 
-  // Show loading or error state
-  if (loading) {
-    return <div className="loading-container">Loading budgets...</div>;
-  }
-  if (error) {
-     return <div className="error-container">{error}</div>;
-  }
+  if (loading) return <div className="loading-container">Loading budgets...</div>;
+  if (error) return <div className="error-container">{error}</div>;
 
   return (
     <div className="budget-container">
@@ -155,8 +147,8 @@ const BudgetPage = () => {
       <div className="budget-overview-grid">
         <DashboardCard title="Planned"><div className="overview-stat">₹{totalPlanned.toLocaleString('en-IN')}</div></DashboardCard>
         <DashboardCard title="Spent"><div className="overview-stat">₹{totalSpent.toLocaleString('en-IN')}</div></DashboardCard>
-        <DashboardCard title="Left"><div className="overview-stat" style={{ color: totalLeft < 0 ? '#DC3545' : 'var(--success-color)' }}>₹{totalLeft.toLocaleString('en-IN')}</div></DashboardCard>
-        <DashboardCard title="Status"><div className="overview-stat" style={{ color: 'var(--success-color)' }}>🟢 Good</div></DashboardCard>
+        <DashboardCard title="Left"><div className="overview-stat" style={{ color: totalLeft < 0 ? 'var(--danger-color)' : 'var(--secondary-color)' }}>₹{totalLeft.toLocaleString('en-IN')}</div></DashboardCard>
+        <DashboardCard title="Status"><div className="overview-stat" style={{ color: 'var(--secondary-color)' }}>🟢 Good</div></DashboardCard>
       </div>
 
       {/* Interactive Budget Allocator */}
@@ -177,7 +169,7 @@ const BudgetPage = () => {
             const isSavings = budget.category.includes('Savings');
 
             return (
-              <div className="allocator-row" key={budget.id || budget.category}> {/* Use id if available */}
+              <div className="allocator-row" key={budget.id || budget.category}> 
                 <span className="col-category">{budget.category}</span>
                 <span className="col-budget">₹{planned.toLocaleString('en-IN')}</span>
                 <span className="col-spent">{isSavings ? '---' : `₹${spent.toLocaleString('en-IN')}`}</span>
@@ -186,7 +178,7 @@ const BudgetPage = () => {
                     <div className="progress-bar-container">
                       <div
                         className="progress-bar"
-                        style={{
+                        style={{ 
                           width: `${Math.min(percent, 100)}%`,
                           backgroundColor: getProgressColor(spent, planned)
                         }}
@@ -195,7 +187,6 @@ const BudgetPage = () => {
                   )}
                 </span>
                 <span className="col-action">
-                  {/* Call openEditModal when gear is clicked */}
                   <button className="action-btn" onClick={() => openEditModal(budget)}>
                     ⚙️
                   </button>
@@ -229,6 +220,7 @@ const BudgetPage = () => {
           budgetToEdit={budgetToEdit}
           onClose={closeEditModal}
           onBudgetSaved={handleBudgetSaved}
+          userId={auth.currentUser?.uid} 
         />
       )}
     </div>

@@ -1,17 +1,17 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react'; // Removed useRef
 import './DashboardPage.css';
 import DashboardCard from '../../components/DashboardCard/DashboardCard';
 import SpendingPieChart from '../../components/SpendingPieChart/SpendingPieChart';
 import NetWorthTrend from '../../components/NetWorthTrend/NetWorthTrend';
 import axios from 'axios';
-// Import auth to get user ID for fetching user profile (containing income)
 import { auth } from '../../firebase'; 
 
-// API Endpoints (ensure port is correct)
-const API_EXPENSES_URL = 'http://localhost:8081/api/expenses';
-const API_BUDGETS_URL = 'http://localhost:8081/api/budgets';
-const API_GOALS_URL = 'http://localhost:8081/api/goals';
-const API_USER_URL = 'http://localhost:8081/api/users'; // Add User API URL
+// API Endpoints (Ensure port is correct)
+const API_BASE_URL = 'http://localhost:8081/api';
+const API_EXPENSES_URL = `${API_BASE_URL}/expenses`;
+const API_BUDGETS_URL = `${API_BASE_URL}/budgets`;
+const API_GOALS_URL = `${API_BASE_URL}/goals`;
+const API_USER_URL = `${API_BASE_URL}/users`;
 
 const DashboardPage = ({ user }) => {
   const [expenses, setExpenses] = useState([]);
@@ -19,31 +19,28 @@ const DashboardPage = ({ user }) => {
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [monthlyIncome, setMonthlyIncome] = useState(0); // New state for dynamic income
-
+  const [monthlyIncome, setMonthlyIncome] = useState(0);
+  
   // --- Data Fetching ---
   useEffect(() => {
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
+    const userId = auth.currentUser?.uid; // CRITICAL: Get user ID
 
-    const fetchData = async (userId) => { // Takes userId now
-      if (!userId) {
-          setError("User not logged in.");
-          setLoading(false);
-          return;
-      }
+    if (!userId) { setError("User not logged in."); setLoading(false); return; }
+
+    const fetchData = async () => {
       try {
+        // CRITICAL FIX: Add userId query param to all data GET requests
         const [expensesRes, budgetsRes, goalsRes, userRes] = await Promise.all([
-          axios.get(API_EXPENSES_URL),
-          axios.get(API_BUDGETS_URL),
-          axios.get(API_GOALS_URL),
-          axios.get(`${API_USER_URL}/${userId}`) // Fetch User Data
+          axios.get(`${API_EXPENSES_URL}?userId=${userId}`),
+          axios.get(`${API_BUDGETS_URL}?userId=${userId}`),
+          axios.get(`${API_GOALS_URL}?userId=${userId}`),
+          axios.get(`${API_USER_URL}/${userId}`)
         ]);
 
         setExpenses(expensesRes.data);
         setBudgets(budgetsRes.data);
         setGoals(goalsRes.data);
-        // Set Income from User Data
         setMonthlyIncome(userRes.data.monthlyIncome || 0);
 
       } catch (err) {
@@ -53,67 +50,32 @@ const DashboardPage = ({ user }) => {
         setLoading(false);
       }
     };
-    
-    // Listen for auth state to get the UID
-    const unsubscribe = auth.onAuthStateChanged(firebaseUser => {
-        if (firebaseUser) {
-            fetchData(firebaseUser.uid);
-        } else {
-            setLoading(false);
-        }
-    });
-    return () => unsubscribe();
+    fetchData();
+  }, []); 
 
-  }, []);
-
-
-  // --- Data Calculations (useMemo) ---
-
-  // 1. Calculate Cash Flow (Income, Expenses, Savings)
+  // --- Data Calculations ---
   const cashFlow = useMemo(() => {
-    // Use the dynamic income fetched from the user profile
     const income = monthlyIncome; 
-    
-    // Calculate total expenses from the fetched data
     const totalExpenses = expenses.reduce((acc, exp) => acc + (Number(exp.amount) || 0), 0);
-    
-    // Savings is calculated directly from income - expenses
     const totalSavings = income - totalExpenses;
+    return { income: income, expenses: totalExpenses, savings: totalSavings };
+  }, [expenses, monthlyIncome]); 
 
-    return {
-      income: income,
-      expenses: totalExpenses,
-      savings: totalSavings,
-    };
-  }, [expenses, monthlyIncome]); // Recalculate if expenses OR income changes
-
-
-  // 2. Calculate Spending Breakdown (for Pie Chart)
   const spendingBreakdown = useMemo(() => {
     const categories = {};
     expenses.forEach(expense => {
       const categoryName = expense.category || 'Other';
-      if (!categories[categoryName]) {
-        categories[categoryName] = 0;
-      }
+      if (!categories[categoryName]) { categories[categoryName] = 0; }
       categories[categoryName] += Number(expense.amount) || 0;
     });
-
-    // Format for Recharts
     return Object.entries(categories).map(([name, amount]) => ({
-      name: name,
-      value: amount,
+      name: name, value: amount,
     }));
   }, [expenses]);
 
   // --- Loading/Error State ---
-  if (loading) {
-    return <div className="loading-container">Loading Dashboard...</div>;
-  }
-  if (error) {
-    return <div className="error-container">{error}</div>;
-  }
-
+  if (loading) { return <div className="loading-container">Loading Dashboard...</div>; }
+  if (error) { return <div className="error-container">{error}</div>; }
   const username = user?.displayName || 'User';
 
   return (
@@ -122,23 +84,18 @@ const DashboardPage = ({ user }) => {
         Welcome back, <span className="username">{username}</span>!
       </h1>
       
-      <div className="dashboard-grid">
+      <div className="dashboard-grid"> 
 
-        {/* Card 1: Financial Health (Placeholder) */}
+        {/* Card 1: Financial Health (Static placeholder) */}
         <DashboardCard title="Financial Health Score">
-          {/* ... (static content remains) ... */}
           <div className="health-score-content">
             <span className="trophy">🏆</span>
-            <div className="score">
-              82<span className="total">/100</span>
-            </div>
-            <div className="score-trend positive">
-              ↑ +5 pts from last month
-            </div>
+            <div className="score">82<span className="total">/100</span></div>
+            <div className="score-trend positive">↑ +5 pts from last month</div>
           </div>
         </DashboardCard>
 
-        {/* Card 2: Cash Flow (NOW USES REAL DATA) */}
+        {/* Card 2: Cash Flow (Uses real data) */}
         <DashboardCard title="Cash Flow This Month">
           <div className="cash-flow-content">
             <div className="cash-flow-item income">
@@ -151,7 +108,8 @@ const DashboardPage = ({ user }) => {
             </div>
             <div className="cash-flow-item savings">
               <span>Savings</span>
-              <strong style={{ color: cashFlow.savings >= 0 ? 'var(--success-color)' : '#DC3545' }}>
+              {/* Uses CSS variables defined in index.css for vibrant theme */}
+              <strong style={{ color: cashFlow.savings >= 0 ? 'var(--success-color)' : 'var(--danger-color)' }}>
                 ₹{Math.abs(cashFlow.savings).toLocaleString('en-IN')} {cashFlow.savings >= 0 ? '↑' : '↓'}
               </strong>
             </div>
@@ -161,7 +119,7 @@ const DashboardPage = ({ user }) => {
         {/* Card 3: Spending Breakdown (Pass real data) */}
         <SpendingPieChart data={spendingBreakdown} />
 
-        {/* Card 4: Net Worth Trend (Static mock data remains) */}
+        {/* Card 4: Net Worth Trend (Static mock data) */}
         <NetWorthTrend />
         
       </div>

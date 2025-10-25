@@ -1,85 +1,184 @@
-/* --- src/components/Hero.css --- */
+/* --- src/components/Hero/Hero.css --- */
 
-.hero-container {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    height: 85vh;
-    min-height: 400px;
-    padding: 0 2rem;
-    color: white;
-    background: linear-gradient(
-        rgba(0, 0, 0, 0.45),
-        rgba(0, 0, 0, 0.65)
-      ),
-      url('../assets/hero-background.jpg') center/cover no-repeat;
-    overflow: hidden;
-    transition: all 0.5s ease;
+/* Reset for the Hero section based on new dark theme */
+.hero-section {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 90vh;
+  overflow: hidden;
+  text-align: center;
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* --- Background Shapes --- */
+.bg-shapes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.shape {
+  position: absolute;
+  z-index: 0;
+  will-change: transform, opacity;
+}
+
+.shape-1 {
+  width: 300px;
+  height: 300px;
+  top: 10%;
+  left: 10%;
+  background: var(--primary-color);
+  border-radius: 50%;
+  opacity: 0.15;
+}
+
+.shape-2 {
+  width: 500px;
+  height: 500px;
+  bottom: 5%;
+  right: 5%;
+  background: var(--secondary-color);
+  clip-path: polygon(
+    20% 0%, 0% 20%, 30% 50%, 0% 80%, 20% 100%,
+    50% 70%, 80% 100%, 100% 80%, 70% 50%, 100% 20%, 80% 0%, 50% 30%
+  );
+  opacity: 0.1;
+}
+
+/* --- Hero Content --- */
+.hero-content {
+  position: relative;
+  z-index: 10;
+  max-width: 900px;
+  padding: 0 1rem;
+  text-align: center;
+}
+
+/* ✅ Fixed headline centering */
+.hero-headline {
+  font-size: clamp(2.5rem, 6vw, 5.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  color: #fff;
+  text-align: center; /* centers text lines */
+  display: inline-block; /* fixes wrapping behavior */
+  margin: 0 auto 1rem auto;
+  width: auto;
+}
+
+/* ✅ Each word animates independently but wraps naturally */
+.hero-headline .word {
+  display: inline-block;
+  margin: 0 0.3rem;
+  vertical-align: middle;
+  text-align: center;
+  white-space: normal; /* allow natural wrapping */
+}
+
+/* Animation initial state */
+.hero-headline .word,
+.hero-subtitle,
+.cta-btn {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.hero-subtitle {
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  color: var(--text-light);
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+/* --- Buttons --- */
+.hero-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.cta-btn {
+  padding: 0.8rem 1.8rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: transform 0.3s ease-out;
+  will-change: transform;
+}
+
+.primary-btn {
+  background-color: var(--primary-color);
+  color: var(--text-dark);
+}
+
+.primary-btn:hover {
+  background-color: #6455cc;
+}
+
+.secondary-btn {
+  background-color: transparent;
+  color: var(--secondary-color);
+  border: 2px solid var(--secondary-color);
+}
+
+.secondary-btn:hover {
+  background-color: rgba(0, 255, 127, 0.1);
+}
+
+/* --- Trust Indicators --- */
+.trust-indicators {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  max-width: 800px;
+  margin: 0 auto;
+  font-size: 0.9rem;
+  color: var(--text-light);
+  padding-top: 5rem;
+  opacity: 0;
+}
+
+.trust-item {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* ✅ Responsive adjustments */
+@media (max-width: 600px) {
+  .hero-headline {
+    font-size: clamp(2rem, 8vw, 3rem);
   }
-  
-  .hero-content {
-    position: relative;
-    z-index: 2;
-    max-width: 650px;
-    animation: fadeIn 1.2s ease-in-out;
-  }
-  
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  
-  .hero-title {
-    font-size: 3.2rem;
-    font-weight: 800;
-    margin-bottom: 1rem;
-    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  }
-  
-  .hero-subtitle {
-    font-size: 1.25rem;
-    font-weight: 400;
-    margin-bottom: 2rem;
-    color: rgba(255, 255, 255, 0.9);
-  }
-  
+
   .hero-buttons {
-    display: flex;
-    justify-content: center;
+    flex-direction: column;
+  }
+
+  .trust-indicators {
+    flex-direction: column;
     gap: 1rem;
   }
-  
-  .hero-btn {
-    padding: 0.8rem 1.6rem;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
-    transition: all 0.3s ease-in-out;
+}
+
+/* Accessibility: Reduce Motion */
+@media (prefers-reduced-motion: reduce) {
+  .hero-headline .word,
+  .hero-subtitle,
+  .cta-btn,
+  .trust-indicators,
+  .trust-item {
+    opacity: 1 !important;
+    transform: none !important;
   }
-  
-  .hero-btn.primary {
-    background: linear-gradient(135deg, var(--primary-color), #0078ff);
-    color: white;
-    box-shadow: 0 4px 12px rgba(0, 120, 255, 0.3);
-  }
-  
-  .hero-btn.primary:hover {
-    background: linear-gradient(135deg, #0060cc, #0056b3);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(0, 86, 179, 0.4);
-  }
-  
-  .hero-btn.secondary {
-    background: transparent;
-    color: white;
-    border: 1px solid white;
-  }
-  
-  .hero-btn.secondary:hover {
-    background: rgba(255, 255, 255, 0.9);
-    color: var(--text-dark);
-    transform: translateY(-2px);
-  }
-  
+}

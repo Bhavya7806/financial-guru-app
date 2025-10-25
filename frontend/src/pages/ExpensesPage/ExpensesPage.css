@@ -1,126 +1,133 @@
+/* --- src/pages/ExpensesPage/ExpensesPage.css --- */
+
 .expenses-container {
-    padding: 1rem 0; /* Add padding */
-    animation: fadeIn 0.5s ease-in-out;
-  }
-  
-  /* 1. HEADER */
-  .expenses-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 1.5rem;
-  }
-  
-  .expenses-header h1 {
-    font-size: 2.2rem;
-    font-weight: 700;
-    color: var(--text-dark);
-  }
-  
-  .total-expense-display {
-    font-size: 1.5rem;
-    font-weight: 500;
-    color: var(--text-light);
-  }
-  
-  .total-expense-display span {
-    font-weight: 700;
-    color: #DC3545; /* Red for expense */
-  }
-  
-  /* 2. CONTROLS */
-  .controls-bar {
-    display: flex;
-    gap: 0.75rem;
-    margin-bottom: 2rem;
-  }
-  
-  .control-btn,
-  .search-input {
-    padding: 0.6rem 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background: var(--bg-white);
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-  }
-  
-  .control-btn:hover {
-    border-color: var(--primary-color);
-    color: var(--primary-color);
-  }
-  
-  .search-input {
-    flex-grow: 1;
-    max-width: 300px;
-  }
-  
-  .search-input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
-  }
-  
-  .add-btn {
-    background: var(--primary-color);
-    color: white;
-    border-color: var(--primary-color);
-    margin-left: auto; /* Pushes it to the right */
-  }
-  
-  .add-btn:hover {
-    background: #0068d7;
-    color: white;
-  }
-  
-  /* 3. MAIN LAYOUT */
-  .expenses-main-layout {
-    display: grid;
-    grid-template-columns: 2fr 1fr; /* 2-column layout */
-    gap: 2rem;
-    margin-bottom: 2rem;
-  }
-  
-  .expense-list-section {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  /* 4. CATEGORY BREAKDOWN */
-  .category-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-  }
-  
-  .category-item {
-    font-size: 0.9rem;
-  }
-  
-  .category-info {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
-  }
-  .category-info span {
-    color: var(--text-light);
-  }
-  .category-info strong {
-    color: var(--text-dark);
-    font-weight: 600;
-  }
-  
-  .progress-bar-container {
-    width: 100%;
-    height: 8px;
-    background-color: var(--border-color);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  
-  .progress-bar {
-    height: 100%;
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    border-radius: 4px;
-  }
+  padding: 1rem 0; 
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.expenses-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 1.5rem;
+}
+
+.expenses-header h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--text-dark); /* White */
+}
+
+.total-expense-display {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--text-light); /* Light Gray */
+}
+
+.total-expense-display span {
+  font-weight: 700;
+  color: var(--danger-color); /* Red for expense */
+}
+
+/* CONTROLS */
+.controls-bar {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.control-btn,
+.search-input {
+  padding: 0.6rem 1rem;
+  /* FIX: Dark background for input/button */
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-dark); /* White text */
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.search-input::placeholder {
+  color: var(--text-light); /* Light gray placeholder text */
+}
+
+.control-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.search-input {
+  flex-grow: 1;
+  max-width: 300px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.add-btn {
+  background: var(--primary-color);
+  color: var(--text-dark); /* White text */
+  border-color: var(--primary-color);
+  margin-left: auto;
+}
+
+.add-btn:hover {
+  background: #5e4bb5; /* Darker primary */
+  color: var(--text-dark);
+}
+
+/* MAIN LAYOUT */
+.expenses-main-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.expense-list-section {
+  display: flex;
+  flex-direction: column;
+}
+
+/* CATEGORY BREAKDOWN */
+.category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.category-item {
+  font-size: 0.9rem;
+}
+
+.category-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+.category-info span {
+  color: var(--text-light); /* Light gray */
+}
+.category-info strong {
+  color: var(--text-dark); /* White */
+  font-weight: 600;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background-color: var(--border-color); /* Soft dark color */
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  border-radius: 4px;
+}

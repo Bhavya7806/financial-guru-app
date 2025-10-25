@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './SettingsPage.css'; // We'll create this next
+import './SettingsPage.css'; 
 import axios from 'axios';
 import { auth } from '../../firebase';
 
@@ -10,57 +10,38 @@ const SettingsPage = () => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [editableIncome, setEditableIncome] = useState(''); // State for the input field
-  const [isSaving, setIsSaving] = useState(false); // State for save button
-  const [saveMessage, setSaveMessage] = useState(''); // Success/error message
+  const [editableIncome, setEditableIncome] = useState(''); 
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
 
   // Fetch user data on load
   useEffect(() => {
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
+    const userId = auth.currentUser?.uid; // CRITICAL: Get user ID
 
-    const fetchData = async (userId) => {
-      if (!userId) {
-        setError("Not logged in.");
-        setLoading(false);
-        return;
-      }
+    if (!userId) { setError("Not logged in."); setLoading(false); return; }
+
+    const fetchData = async () => {
       try {
+        // CRITICAL FIX: Use userId in the URL path
         const response = await axios.get(`${USER_API_URL}/${userId}`);
         setUserData(response.data);
-        setEditableIncome(response.data.monthlyIncome?.toString() || ''); // Pre-fill income input
+        setEditableIncome(response.data.monthlyIncome?.toString() || ''); 
       } catch (err) {
         console.error("Error fetching user data:", err);
         setError("Failed to load user data. Please refresh.");
-      } finally {
-        setLoading(false);
-      }
+      } finally { setLoading(false); }
     };
-
-    const unsubscribe = auth.onAuthStateChanged(user => {
-      if (user) {
-        fetchData(user.uid);
-      } else {
-        setError("Please log in to view settings.");
-        setLoading(false);
-      }
-    });
-    return () => unsubscribe();
+    fetchData();
   }, []);
 
   // Handle saving the updated income
   const handleSaveIncome = async (e) => {
-    e.preventDefault(); // Prevent form submission
-    setIsSaving(true);
-    setSaveMessage('');
-    setError('');
-    const userId = auth.currentUser?.uid;
+    e.preventDefault(); 
+    setIsSaving(true); setSaveMessage(''); setError('');
+    const userId = auth.currentUser?.uid; // CRITICAL: Get user ID
 
-    if (!userId) {
-      setError("Not logged in.");
-      setIsSaving(false);
-      return;
-    }
+    if (!userId) { setError("Not logged in."); setIsSaving(false); return; }
 
     const newIncome = parseFloat(editableIncome);
     if (isNaN(newIncome) || newIncome < 0) {
@@ -69,34 +50,28 @@ const SettingsPage = () => {
         return;
     }
 
-
     try {
-      // Call the new PUT endpoint
-      const response = await axios.put(`${USER_API_URL}/${userId}/income`, {
-        monthlyIncome: newIncome
-      });
-      setUserData(response.data); // Update local state with response
-      setEditableIncome(response.data.monthlyIncome?.toString() || ''); // Update input field state
+      // CRITICAL FIX: Include userId in the payload (optional, but good practice)
+      const payload = { monthlyIncome: newIncome, userId: userId }; 
+
+      // PUT to user's route (path variable used for userId)
+      const response = await axios.put(`${USER_API_URL}/${userId}/income`, payload); 
+      setUserData(response.data);
+      setEditableIncome(response.data.monthlyIncome?.toString() || '');
       setSaveMessage('Income updated successfully!');
-      // Auto-clear success message after a few seconds
       setTimeout(() => setSaveMessage(''), 3000);
 
     } catch (err) {
       console.error("Error updating income:", err);
       setSaveMessage('Failed to update income. Please try again.');
-    } finally {
-      setIsSaving(false);
-    }
+    } finally { setIsSaving(false); }
   };
 
 
-  // Render states
   if (loading) return <div className="loading-container">Loading settings...</div>;
   if (error) return <div className="error-container">{error}</div>;
-  if (!userData) return <div className="error-container">Could not load user data.</div>; // Should be covered by error state, but safe check
+  if (!userData) return <div className="error-container">Could not load user data.</div>; 
 
-
-  // Render the page content
   return (
     <div className="settings-container">
       <h1>Settings</h1>
@@ -123,7 +98,7 @@ const SettingsPage = () => {
                 value={editableIncome}
                 onChange={(e) => {
                     setEditableIncome(e.target.value);
-                    setSaveMessage(''); // Clear message when user types
+                    setSaveMessage(''); 
                 }}
                 placeholder="Enter income"
                 min="0"
@@ -135,9 +110,6 @@ const SettingsPage = () => {
            {saveMessage && <p className={`save-message ${saveMessage.includes('Failed') ? 'error' : 'success'}`}>{saveMessage}</p>}
         </form>
       </div>
-
-      {/* Add more sections later (e.g., Change Password, Delete Account) */}
-
     </div>
   );
 };

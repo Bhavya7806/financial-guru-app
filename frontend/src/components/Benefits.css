@@ -1,63 +1,72 @@
 /* --- src/components/Benefits.css --- */
 
 .benefits-section {
-    padding: 4rem 2rem;
-    background: linear-gradient(180deg, var(--bg-light), #eef3f7);
-    text-align: center;
-  }
+  padding: 4rem 2rem;
+  background: var(--bg-primary); /* Use primary dark background */
+  text-align: center;
+  border-top: 1px solid var(--border-color);
+}
+
+.benefits-section .section-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-dark); /* White title */
+  margin-bottom: 1rem;
+}
+
+.section-subtitle {
+  font-size: 1.1rem;
+  color: var(--text-light); /* Light gray text */
+  margin-bottom: 3rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.benefits-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* --- Frosted Card Effect (Less Glassy) --- */
+.benefit-card {
+  flex-basis: 300px;
   
-  .benefits-section .section-title {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--text-dark);
-    margin-bottom: 1rem;
-  }
+  /* Frosted Base Style */
+  background: rgba(44, 41, 63, 0.5); /* Higher opacity than features */
+  backdrop-filter: blur(5px); /* Much lighter blur */
+  -webkit-backdrop-filter: blur(5px);
   
-  .section-subtitle {
-    font-size: 1.1rem;
-    color: var(--text-light);
-    margin-bottom: 3rem;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-  }
+  /* Border and Shape */
+  border: 1px solid rgba(192, 192, 192, 0.2); /* Subtle light border */
+  border-radius: 12px;
+  padding: 2.5rem 2rem;
   
-  .benefits-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-  
-  .benefit-card {
-    flex-basis: 300px;
-    background: var(--bg-white);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 2.5rem 2rem;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease-in-out;
-    backdrop-filter: blur(4px);
-  }
-  
-  .benefit-card:hover {
-    transform: translateY(-5px) scale(1.02);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-  }
-  
-  .benefit-stat {
-    font-size: 3rem;
-    font-weight: 700;
-    color: var(--primary-color);
-    display: block;
-    margin-bottom: 0.75rem;
-  }
-  
-  .benefit-description {
-    font-size: 1rem;
-    color: var(--text-light);
-    line-height: 1.6;
-  }
-  
+  /* Shadow and Transition */
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4); 
+  transition: all 0.3s ease-in-out;
+  will-change: transform, box-shadow;
+}
+
+.benefit-card:hover {
+  transform: translateY(-8px) scale(1.03); /* Gentle lift effect */
+  box-shadow: 0 10px 25px rgba(123, 104, 238, 0.5); /* Primary color shadow */
+}
+
+.benefit-stat {
+  font-size: 3rem;
+  font-weight: 800; /* Extra bold for key stats */
+  color: var(--primary-color); /* Vibrant color for emphasis */
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.benefit-description {
+  font-size: 1rem;
+  color: var(--text-light);
+  line-height: 1.6;
+}

@@ -1,12 +1,10 @@
-// --- src/App.jsx --- (Updated)
-
-import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'; // 1. Import useNavigate
-import { auth, db } from './firebase'; // 2. Import db
+import React, { useState, useEffect, useRef } from 'react'; // Added useRef
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { auth, db } from './firebase'; 
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore'; // 3. Import getDoc
+import { doc, getDoc } from 'firebase/firestore'; 
 
-// ... (Import all your pages: HomePage, AuthModal, Navbar, Sidebar, DashboardPage, ExpensesPage, BudgetPage, GoalsPage, SettingsPage)
+// Import all pages
 import HomePage from './pages/HomePage/HomePage';
 import AuthModal from './components/AuthModal/AuthModal';
 import Navbar from './components/Navbar';
@@ -16,18 +14,16 @@ import ExpensesPage from './pages/ExpensesPage/ExpensesPage';
 import BudgetPage from './pages/BudgetPage/BudgetPage';
 import GoalsPage from './pages/GoalsPage/GoalsPage';
 import SettingsPage from './pages/SettingsPage/SettingsPage';
-import OnboardingPage from './pages/OnboardingPage/OnboardingPage'; // 4. Import OnboardingPage
+import OnboardingPage from './pages/OnboardingPage/OnboardingPage'; 
 
-// --- ProtectedRoute Component (No changes needed) ---
+// --- ProtectedRoute Component ---
 const ProtectedRoute = ({ user, isOnboardingComplete, children }) => {
   if (!user) {
-    return <Navigate to="/" replace />; // Not logged in, go home
+    return <Navigate to="/" replace />; 
   }
-  // 5. NEW CHECK: If logged in but onboarding NOT complete, force onboarding
   if (!isOnboardingComplete) {
     return <Navigate to="/onboarding" replace />;
   }
-  // Logged in AND onboarding complete, show dashboard layout
   return (
     <div className="dashboard-layout">
       <Sidebar />
@@ -44,15 +40,17 @@ function App() {
 
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isOnboardingComplete, setIsOnboardingComplete] = useState(false); // 6. Add onboarding status state
+  const [isOnboardingComplete, setIsOnboardingComplete] = useState(false); 
+  
+  // 1. Footer Ref for smooth scrolling
+  const footerRef = useRef(null); 
 
   // Listen for Firebase auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        // --- 7. FETCH USER DATA ---
-        // User is logged in, check their onboarding status in Firestore
+        // Fetch User Data to check onboarding status
         const userDocRef = doc(db, 'users', currentUser.uid);
         const userDocSnap = await getDoc(userDocRef);
 
@@ -61,16 +59,20 @@ function App() {
         } else {
           setIsOnboardingComplete(false);
         }
-        // --- END FETCH ---
       } else {
-        // User logged out, reset onboarding status
         setIsOnboardingComplete(false);
       }
       setLoading(false);
     });
-    // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, []); // Run only once on mount
+  }, []); 
+  
+  // 2. Define the smooth scroll handler function
+  const scrollToContact = () => {
+    if (footerRef.current) {
+      footerRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   const openAuthModal = (view) => {
     setAuthInitialView(view);
@@ -81,84 +83,56 @@ function App() {
     setIsAuthModalOpen(false);
   };
 
-  // Show loading indicator
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  if (loading) { return <div>Loading...</div>; }
 
   return (
     <div className="App">
-      <Navbar user={user} onOpenAuthModal={openAuthModal} />
+      {/* 3. Pass scroll handler to Navbar */}
+      <Navbar 
+        user={user} 
+        onOpenAuthModal={openAuthModal} 
+        onScrollToContact={scrollToContact} 
+      />
 
       <Routes>
-        {/* --- Public Route --- */}
+        {/* 4. Pass refs and handlers to HomePage */}
         <Route
           path="/"
-          element={user && !isOnboardingComplete ? <Navigate to="/onboarding" replace /> : <HomePage />} // 8. If logged in but not onboarded, redirect from home too
+          element={user && !isOnboardingComplete 
+            ? <Navigate to="/onboarding" replace /> 
+            : <HomePage 
+                 footerRef={footerRef} 
+                 onOpenAuthModal={openAuthModal} 
+                 user={user} 
+              />} 
         />
 
         {/* --- Onboarding Route --- */}
-        {/* Only accessible if logged in but onboarding is NOT complete */}
         <Route
           path="/onboarding"
-          element={!user ? <Navigate to="/" replace /> : (isOnboardingComplete ? <Navigate to="/dashboard" replace /> : <OnboardingPage />)} // 9. Logic for onboarding route access
+          element={
+            !user 
+              ? <Navigate to="/" replace /> 
+              : (isOnboardingComplete 
+                  ? <Navigate to="/dashboard" replace /> 
+                  : <OnboardingPage 
+                        setOnboardingComplete={setIsOnboardingComplete} 
+                    />
+                )
+          }
         />
 
         {/* --- Protected Routes --- */}
-        {/* These now use the isOnboardingComplete check inside ProtectedRoute */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute user={user} isOnboardingComplete={isOnboardingComplete}>
-              <DashboardPage user={user} />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/expenses"
-          element={
-            <ProtectedRoute user={user} isOnboardingComplete={isOnboardingComplete}>
-              <ExpensesPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/budget"
-          element={
-            <ProtectedRoute user={user} isOnboardingComplete={isOnboardingComplete}>
-              <BudgetPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/goals"
-          element={
-            <ProtectedRoute user={user} isOnboardingComplete={isOnboardingComplete}>
-              <GoalsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute user={user} isOnboardingComplete={isOnboardingComplete}>
-              <SettingsPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/dashboard" element={<ProtectedRoute user={user} isOnboardingComplete={isOnboardingComplete}><DashboardPage user={user} /></ProtectedRoute>} />
+        <Route path="/expenses" element={<ProtectedRoute user={user} isOnboardingComplete={isOnboardingComplete}><ExpensesPage /></ProtectedRoute>} />
+        <Route path="/budget" element={<ProtectedRoute user={user} isOnboardingComplete={isOnboardingComplete}><BudgetPage /></ProtectedRoute>} />
+        <Route path="/goals" element={<ProtectedRoute user={user} isOnboardingComplete={isOnboardingComplete}><GoalsPage /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute user={user} isOnboardingComplete={isOnboardingComplete}><SettingsPage /></ProtectedRoute>} />
 
-        {/* Catch-all for logged-in users trying invalid paths */}
         <Route path="*" element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/" replace />} />
-
       </Routes>
 
-      {/* Auth Modal */}
-      {isAuthModalOpen && (
-        <AuthModal
-          initialView={authInitialView}
-          onClose={closeAuthModal}
-        />
-      )}
+      {isAuthModalOpen && (<AuthModal initialView={authInitialView} onClose={closeAuthModal} />)}
     </div>
   );
 }

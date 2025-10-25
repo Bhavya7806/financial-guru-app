@@ -1,48 +1,38 @@
 import React, { useState } from 'react';
 import './AddExpenseModal.css';
-import axios from 'axios'; // 1. Import axios
+import axios from 'axios'; 
 
-// 2. Define your API endpoint
-const API_URL = 'http://localhost:8081/api/expenses'; // Use the correct port;
+const API_URL = 'http://localhost:8081/api/expenses'; 
 
-const AddExpenseModal = ({ onClose, onAddExpense }) => {
+// CRITICAL: Receive userId prop
+const AddExpenseModal = ({ onClose, onAddExpense, userId }) => { 
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [category, setCategory] = useState('Food');
-  const [error, setError] = useState(''); // 3. Add error state
+  const [category, setCategory] = useState('Food'); 
+  const [error, setError] = useState(''); 
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => { // 4. Make this function async
+  const handleSubmit = async (e) => { 
     e.preventDefault();
-    setError(''); // Clear previous errors
+    setError(''); setLoading(true);
 
-    if (!description || !amount || !date || !category) {
-      setError("Please fill out all fields.");
-      return;
-    }
+    if (!description || !amount || !date || !category) { setError("Please fill out all fields."); setLoading(false); return; }
+    if (!userId) { setError("Authentication failed. Please log in."); setLoading(false); return; }
 
-    // 5. Create the new expense object (no ID needed)
     const newExpense = {
-      description,
-      amount: parseFloat(amount),
-      date,
-      category,
+      description, amount: parseFloat(amount), date, category,
+      userId: userId, // CRITICAL FIX: Add userId to the payload
     };
 
     try {
-      // 6. Send the POST request to your backend
       const response = await axios.post(API_URL, newExpense);
-
-      // 7. Get the new expense (with ID) from the server's response
-      const expenseFromServer = response.data;
-      
-      onAddExpense(expenseFromServer); // 8. Pass the new expense to the parent
-      onClose(); // 9. Close the modal on success
-
+      onAddExpense(response.data); 
+      onClose(); 
     } catch (err) {
       console.error("Error adding expense: ", err);
-      setError("Failed to add expense. Please try again.");
-    }
+      setError(`Failed to add expense. Error: ${err.message}`);
+    } finally { setLoading(false); }
   };
 
   return (
@@ -51,57 +41,29 @@ const AddExpenseModal = ({ onClose, onAddExpense }) => {
         <button className="modal-close-btn" onClick={onClose}>&times;</button>
         <h2>Add New Expense</h2>
 
-        {/* 10. Show the error message */}
         {error && <p className="modal-error">{error}</p>}
         
         <form onSubmit={handleSubmit} className="expense-form">
-          {/* ... all your form-group inputs are the same ... */}
-          {/* (Description) */}
           <div className="form-group">
             <label htmlFor="description">Where did you spend?</label>
-            <input
-              type="text"
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g., Starbucks Coffee"
-              required
-            />
+            <input type="text" id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="e.g., Starbucks Coffee" required />
           </div>
           
-          {/* (Amount & Date) */}
           <div className="form-group-row">
             <div className="form-group">
               <label htmlFor="amount">How much?</label>
-              <input
-                type="number"
-                id="amount"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="₹0.00"
-                required
-              />
+              <input type="number" id="amount" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="₹0.00" required />
             </div>
+            
             <div className="form-group">
               <label htmlFor="date">Date</label>
-              <input
-                type="date"
-                id="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-              />
+              <input type="date" id="date" value={date} onChange={(e) => setDate(e.target.value)} required />
             </div>
           </div>
           
-          {/* (Category) */}
           <div className="form-group">
             <label htmlFor="category">Category</label>
-            <select
-              id="category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            >
+            <select id="category" value={category} onChange={(e) => setCategory(e.target.value)}>
               <option value="Food">Food 🍕</option>
               <option value="Housing">Housing 🏠</option>
               <option value="Transportation">Transportation 🚗</option>
@@ -111,8 +73,8 @@ const AddExpenseModal = ({ onClose, onAddExpense }) => {
             </select>
           </div>
           
-          <button type="submit" className="form-submit-btn">
-            Add Expense
+          <button type="submit" className="form-submit-btn" disabled={loading}>
+            {loading ? 'Adding...' : 'Add Expense'}
           </button>
         </form>
       </div>

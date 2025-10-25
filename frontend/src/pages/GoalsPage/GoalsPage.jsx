@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useMemo } from 'react'; // Added useMemo
+import React, { useState, useEffect, useMemo } from 'react';
 import './GoalsPage.css';
 import DashboardCard from '../../components/DashboardCard/DashboardCard';
 import axios from 'axios';
-import AddGoalModal from '../../components/AddGoalModal/AddGoalModal'; // Still needed for the modal component
-import { auth } from '../../firebase'; // Import auth
+import AddGoalModal from '../../components/AddGoalModal/AddGoalModal'; 
+import { auth } from '../../firebase'; 
 
-// API Endpoints (ensure port is correct, e.g., 8081)
-const GOALS_API_URL = 'http://localhost:8081/api/goals';
-const USER_API_URL = 'http://localhost:8081/api/users';
+// API Endpoints (ensure port is correct)
+const API_BASE_URL = 'http://localhost:8081/api';
+const GOALS_API_URL = `${API_BASE_URL}/goals`;
+const USER_API_URL = `${API_BASE_URL}/users`;
 
 // Helper function to calculate months left and format date
 const formatGoalDeadline = (deadlineString) => {
@@ -15,10 +16,13 @@ const formatGoalDeadline = (deadlineString) => {
   try {
     const deadlineDate = new Date(deadlineString);
     const today = new Date();
+    
     let monthsLeft = (deadlineDate.getFullYear() - today.getFullYear()) * 12;
     monthsLeft -= today.getMonth();
     monthsLeft += deadlineDate.getMonth();
+    
     const monthYear = deadlineDate.toLocaleString('default', { month: 'short', year: 'numeric' });
+    
     return {
       date: monthYear,
       remaining: `${monthsLeft <= 0 ? 0 : monthsLeft} months`
@@ -58,52 +62,48 @@ const GoalsPage = () => {
   const [loading, setLoading] = useState(true);
   const [recommendations, setRecommendations] = useState([]);
   const [error, setError] = useState('');
-
-  // Wizard State
   const [showWizard, setShowWizard] = useState(false);
   const [currentWizardStep, setCurrentWizardStep] = useState(1);
-  const [newGoalData, setNewGoalData] = useState({
-    title: '', type: '', target: '', saved: '0', deadline: '',
-  });
-
-  // --- Filter State ---
+  const [newGoalData, setNewGoalData] = useState({ title: '', type: '', target: '', saved: '0', deadline: '' });
   const [selectedFilter, setSelectedFilter] = useState('All');
-  // --- End Filter State ---
-
 
   // Fetch initial data
   useEffect(() => {
-    setLoading(true);
-    setError('');
-    const fetchData = async (userId) => {
-      if (!userId) { setError("User not logged in."); setLoading(false); return; }
+    setLoading(true); setError('');
+    const userId = auth.currentUser?.uid; 
+
+    if (!userId) { setError("User not logged in."); setLoading(false); return; }
+    
+    const fetchData = async () => {
       try {
         const [goalsRes, recommendationsRes] = await Promise.all([
-          axios.get(GOALS_API_URL),
+          axios.get(`${GOALS_API_URL}?userId=${userId}`),
           axios.get(`${USER_API_URL}/${userId}/recommendations`)
         ]);
+
         setGoals(goalsRes.data);
         setRecommendations(recommendationsRes.data);
       } catch (err) {
         console.error("Error fetching goals data:", err); setError("Failed to load goals. Please refresh.");
       } finally { setLoading(false); }
     };
-    const unsubscribe = auth.onAuthStateChanged(user => {
-      if (user) { fetchData(user.uid); }
-      else { setError("Please log in to view goals."); setLoading(false); }
-    });
-    return () => unsubscribe();
-  }, []);
+    fetchData();
+  }, []); 
 
   // Handler for adding a goal via API
-  const handleAddGoal = async (goalToAdd) => {
+  const handleAddGoal = async (goalToAdd) => { 
+    const userId = auth.currentUser?.uid; 
+    if (!userId) { alert("Authentication required to save goal."); return; }
+
+    const goalPayload = { ...goalToAdd, userId: userId }; 
+
      try {
-        const response = await axios.post(GOALS_API_URL, goalToAdd);
+        const response = await axios.post(GOALS_API_URL, goalPayload);
         const goalFromServer = response.data;
         const updatedGoals = [...goals, goalFromServer].sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
         setGoals(updatedGoals);
-        setShowWizard(false);
-        setCurrentWizardStep(1);
+        setShowWizard(false); 
+        setCurrentWizardStep(1); 
         setNewGoalData({ title: '', type: '', target: '', saved: '0', deadline: '' });
       } catch (err) {
         console.error("Error adding goal via API:", err);
@@ -133,7 +133,6 @@ const GoalsPage = () => {
 
   // --- Get unique goal types for filter ---
   const goalTypes = useMemo(() => {
-     // Ensure goal.type exists before accessing it
      const types = new Set(goals.map(goal => goal.type || 'Custom'));
      return ['All', ...types];
   }, [goals]);

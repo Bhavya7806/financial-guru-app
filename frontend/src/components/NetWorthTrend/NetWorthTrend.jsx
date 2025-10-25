@@ -5,7 +5,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import DashboardCard from '../DashboardCard/DashboardCard';
 import './NetWorthTrend.css';
 
-// Mock data for the chart
+// Mock data for the chart (STATIC)
 const data = [
   { name: 'May', netWorth: 380000 },
   { name: 'Jun', netWorth: 400000 },
@@ -19,6 +19,15 @@ const data = [
 const formatCurrency = (value) => `₹${(value / 1000).toFixed(0)}k`;
 
 const NetWorthTrend = () => {
+  // Check if data is too sparse to render the full chart (simulating a render check)
+  if (!data || data.length < 2) {
+      return (
+          <DashboardCard title="Net Worth Trend 📈" className="net-worth-card">
+              <div className="chart-placeholder">Need at least 2 data points to show a trend.</div>
+          </DashboardCard>
+      );
+  }
+
   return (
     // We add a special class here for the grid to target
     <DashboardCard title="Net Worth Trend 📈" className="net-worth-card">

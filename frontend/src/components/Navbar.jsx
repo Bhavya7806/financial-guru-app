@@ -1,20 +1,18 @@
-// --- src/components/Navbar.jsx ---
-
 import React from 'react';
 import './Navbar.css';
 import Logo from '../assets/logo.png'; 
-import { Link, useNavigate } from 'react-router-dom'; // 1. Import Link and useNavigate
-import { auth } from '../firebase'; // 2. Import auth
-import { signOut } from 'firebase/auth'; // 3. Import signOut
+import { Link, useNavigate } from 'react-router-dom';
+import { auth } from '../firebase';
+import { signOut } from 'firebase/auth';
 
-// 4. Accept 'user' prop
-const Navbar = ({ user, onOpenAuthModal }) => {
+// The prop onScrollToContact is no longer needed
+const Navbar = ({ user, onOpenAuthModal }) => { 
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      navigate('/'); // 5. Redirect to home page on logout
+      navigate('/'); 
     } catch (error) {
       console.error("Error signing out: ", error);
     }
@@ -23,7 +21,6 @@ const Navbar = ({ user, onOpenAuthModal }) => {
   return (
     <nav className="navbar">
       <div className="navbar-left">
-        {/* 6. Logo is now a Link to home */}
         <Link to="/" className="navbar-logo-link">
           <img src={Logo} alt="Financial Guru Logo" className="navbar-logo" />
         </Link>
@@ -32,10 +29,12 @@ const Navbar = ({ user, onOpenAuthModal }) => {
         </Link>
       </div>
       <div className="navbar-right">
-        <a href="/#about" className="nav-link">About</a>
-        <a href="/#contact" className="nav-link">Contact Us</a>
+        {/* About: Remains */}
+        <a href="#about" className="nav-link">About</a>
+        
+        {/* CONTACT US BUTTON HAS BEEN REMOVED */}
 
-        {/* 7. Conditional rendering based on user state */}
+        {/* Conditional rendering based on user state */}
         {user ? (
           <>
             <Link to="/dashboard" className="nav-link">Dashboard</Link>

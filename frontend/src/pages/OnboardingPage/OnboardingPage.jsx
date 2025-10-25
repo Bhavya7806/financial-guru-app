@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import './OnboardingPage.css';
-import axios from 'axios'; // Import axios
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { auth } from '../../firebase'; // CRITICAL: Import auth to get the current user UID
 
 // Define the list of goals
 const FINANCIAL_GOALS = [
@@ -11,7 +13,8 @@ const FINANCIAL_GOALS = [
   'Retirement planning',
 ];
 
-const OnboardingPage = () => {
+// CRITICAL: Receive setOnboardingComplete prop from App.jsx
+const OnboardingPage = ({ setOnboardingComplete }) => { 
   // State to track the current step (1 or 2)
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -22,6 +25,9 @@ const OnboardingPage = () => {
   const [monthlyIncome, setMonthlyIncome] = useState('');
   const [monthlyExpenses, setMonthlyExpenses] = useState('');
 
+  // Initialize navigate
+  const navigate = useNavigate();
+
   // Calculated savings rate for display
   const savingsRate = useMemo(() => {
     const income = parseFloat(monthlyIncome);
@@ -29,7 +35,7 @@ const OnboardingPage = () => {
     if (income > 0 && expenses >= 0 && income >= expenses) {
       return (((income - expenses) / income) * 100).toFixed(0);
     }
-    return '--'; // Return '--' if calculation isn't possible
+    return '--'; 
   }, [monthlyIncome, monthlyExpenses]);
 
 
@@ -46,44 +52,43 @@ const OnboardingPage = () => {
     setCurrentStep(2);
   };
 
-  // --- Updated handleFinish function ---
-  const handleFinish = async () => { // Make it async
-    // !!! --- TEMPORARY --- !!!
-    // In a real app with auth, you'd get the userId from your auth context/state.
-    // For now, we'll hardcode the ID of the 'test@example.com' user
-    // you created earlier. Go to Firestore > users collection, find that
-    // user, and copy its Document ID here.
-    const TEMP_USER_ID = "Np1YKMl0kpbDNRX9xPNxjCKYzVh1"; // <--- PASTE USER ID HERE
-
-    if (TEMP_USER_ID === "YOUR_TEST_USER_DOCUMENT_ID_FROM_FIRESTORE") {
-        alert("Developer Note: Please update TEMP_USER_ID in OnboardingPage.jsx with a real User ID from Firestore.");
-        return; // Stop if the ID wasn't updated
+  // --- Final handleFinish function for seamless redirect ---
+  const handleFinish = async () => {
+    // 1. CRITICAL FIX: Get User ID directly from Firebase Auth
+    const firebaseUser = auth.currentUser; 
+    
+    if (!firebaseUser || !firebaseUser.uid) {
+        alert("Authentication Error: Please log in again.");
+        return; 
     }
-    // !!! --- END TEMPORARY --- !!!
-
+    const USER_UID = firebaseUser.uid; // Use the real UID!
 
     const onboardingPayload = {
-      userId: TEMP_USER_ID,
+      userId: USER_UID, // Pass the dynamic UID
       selectedGoals,
       monthlyIncome,
       monthlyExpenses,
     };
 
     try {
-      // Send data to the backend
-      await axios.post('http://localhost:3001/api/users/onboarding', onboardingPayload);
+      // 2. Send data to the backend (Saves to Firestore)
+      await axios.post('http://localhost:8081/api/users/onboarding', onboardingPayload);
 
       console.log("Onboarding data sent successfully!");
-      // **TODO:** Redirect to the dashboard
-      // navigate('/dashboard');
-      alert("Onboarding Complete! Data saved. Redirecting (simulation)..."); // Placeholder alert
+
+      // 3. Update the state in App.jsx immediately
+      if (typeof setOnboardingComplete === 'function') {
+          setOnboardingComplete(true);
+      }
+      
+      // 4. Redirect to dashboard
+      navigate('/dashboard'); 
 
     } catch (err) {
       console.error("Error saving onboarding data:", err);
-      alert("Failed to save onboarding data. Please try again."); // Show error to user
+      alert("Failed to save onboarding data. Please try again.");
     }
   };
-  // --- End of updated handleFinish function ---
 
   return (
     <div className="onboarding-container">
@@ -112,7 +117,7 @@ const OnboardingPage = () => {
             <button
               className="onboarding-next-btn"
               disabled={selectedGoals.length === 0}
-              onClick={goToNextStep} // Go to step 2
+              onClick={goToNextStep} 
             >
               Next: Financial Picture →
             </button>
@@ -162,7 +167,7 @@ const OnboardingPage = () => {
 
             <button
               className="onboarding-next-btn finish-btn"
-              disabled={!monthlyIncome || !monthlyExpenses} // Disable if inputs are empty
+              disabled={!monthlyIncome || !monthlyExpenses} 
               onClick={handleFinish}
             >
               Finish Setup 🎉

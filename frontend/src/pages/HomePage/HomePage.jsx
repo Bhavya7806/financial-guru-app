@@ -1,24 +1,35 @@
-// --- src/pages/HomePage/HomePage.jsx ---
-
-import React from 'react';
+import React, { useRef, forwardRef } from 'react';
 import './HomePage.css';
-// 1. Navbar is no longer imported or rendered here
 import Hero from '../../components/Hero';     
 import Features from '../../components/Features'; 
 import AboutUs from '../../components/AboutUs'; 
 import Benefits from '../../components/Benefits';
 import Footer from '../../components/Footer';
 
-// 2. It no longer needs any props
-const HomePage = () => {
+// Use React.forwardRef if Footer needs a ref
+const FooterWithRef = forwardRef((props, ref) => <Footer {...props} ref={ref} />);
+
+const HomePage = ({ onOpenAuthModal, user, onScrollToContact }) => {
+  
   return (
     <div className="homepage">
-      {/* 3. Navbar is gone from here */}
-      <Hero />
-      <Features />
-      <AboutUs />
+      {/* Pass modal/user status to Hero */}
+      <Hero user={user} onOpenAuthModal={onOpenAuthModal} />
+      
+      {/* ADD ID FOR LEARN MORE BUTTON TO SCROLL TO */}
+      <section id="features">
+         <Features /> 
+      </section>
+      
+      {/* ADD ID FOR ABOUT SECTION TO SCROLL TO */}
+      <section id="about">
+         <AboutUs /> 
+      </section>
+      
       <Benefits />
-      <Footer />
+      
+      {/* Footer is attached via the ref from App.jsx's global state */}
+      <FooterWithRef /> 
     </div>
   );
 };

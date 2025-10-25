@@ -1,47 +1,40 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-// We can reuse the same CSS as the expense modal!
 import '../AddExpenseModal/AddExpenseModal.css'; 
 
-const API_URL = 'http://localhost:3001/api/goals';
+const API_URL = 'http://localhost:8081/api/goals';
 
-const AddGoalModal = ({ onClose, onAddGoal }) => {
+// CRITICAL: Receive userId prop
+const AddGoalModal = ({ onClose, onAddGoal, userId }) => { 
   const [title, setTitle] = useState('');
   const [target, setTarget] = useState('');
-  const [saved, setSaved] = useState('0'); // Default to 0
+  const [saved, setSaved] = useState('0');
   const [deadline, setDeadline] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => { 
     e.preventDefault();
-    setError('');
+    setError(''); setLoading(true);
 
-    if (!title || !target || !deadline) {
-      setError("Please fill out title, target amount, and deadline.");
-      return;
-    }
+    if (!title || !target || !deadline) { setError("Please fill out all fields."); setLoading(false); return; }
+    if (!userId) { setError("Authentication failed. Please log in."); setLoading(false); return; }
 
     const newGoal = {
-      title,
-      target: parseFloat(target),
-      saved: parseFloat(saved),
-      deadline,
+      title, target: parseFloat(target), saved: parseFloat(saved), deadline,
+      userId: userId // CRITICAL FIX: Add userId to the payload
     };
 
     try {
-      // Send the POST request to your backend
       const response = await axios.post(API_URL, newGoal);
-      const goalFromServer = response.data;
-      
-      onAddGoal(goalFromServer); // Pass the new goal to the parent
-      onClose(); // Close the modal
-
+      onAddGoal(response.data);
+      onClose();
     } catch (err) {
       console.error("Error adding goal: ", err);
-      setError("Failed to add goal. Please try again.");
-    }
+      setError("Failed to save goal. Please try again.");
+    } finally { setLoading(false); }
   };
-
+  
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -53,53 +46,28 @@ const AddGoalModal = ({ onClose, onAddGoal }) => {
         <form onSubmit={handleSubmit} className="expense-form">
           <div className="form-group">
             <label htmlFor="title">Goal Title</label>
-            <input
-              type="text"
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Vacation Fund 🌴"
-              required
-            />
+            <input type="text" id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Vacation Fund" required />
           </div>
           
           <div className="form-group-row">
             <div className="form-group">
               <label htmlFor="target">Target Amount</label>
-              <input
-                type="number"
-                id="target"
-                value={target}
-                onChange={(e) => setTarget(e.target.value)}
-                placeholder="₹80,000"
-                required
-              />
+              <input type="number" id="target" value={target} onChange={(e) => setTarget(e.target.value)} placeholder="₹50000" required />
             </div>
+            
             <div className="form-group">
               <label htmlFor="saved">Already Saved (Optional)</label>
-              <input
-                type="number"
-                id="saved"
-                value={saved}
-                onChange={(e) => setSaved(e.target.value)}
-                placeholder="₹0"
-              />
+              <input type="number" id="saved" value={saved} onChange={(e) => setSaved(e.target.value)} placeholder="₹0" />
             </div>
           </div>
           
           <div className="form-group">
             <label htmlFor="deadline">Target Date</label>
-            <input
-              type="date"
-              id="deadline"
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-              required
-            />
+            <input type="date" id="deadline" value={deadline} onChange={(e) => setDeadline(e.target.value)} required />
           </div>
           
-          <button type="submit" className="form-submit-btn">
-            Add Goal
+          <button type="submit" className="form-submit-btn" disabled={loading}>
+            {loading ? 'Adding...' : 'Add Goal'}
           </button>
         </form>
       </div>

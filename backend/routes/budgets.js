@@ -4,30 +4,27 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../index');
 
-const budgetsRef = db.collection('budgets');
+const getUserId = (req) => req.query.userId || req.body.userId || 'default_user';
 
 /**
  * @route   GET /api/budgets
- * @desc    Get all budget items
- * @access  Public
+ * @desc    Get all budget items for current user
+ * @access  Public (Requires userId query param)
  */
 router.get('/', async (req, res) => {
+  const userId = getUserId(req);
   try {
+    const budgetsRef = db.collection('users').doc(userId).collection('budgets');
     const snapshot = await budgetsRef.get();
     
     const budgets = [];
-    snapshot.forEach(doc => {
-      budgets.push({
-        id: doc.id,
-        ...doc.data()
-      });
-    });
+    snapshot.forEach(doc => { budgets.push({ id: doc.id, ...doc.data() }); });
     
-    // Send the budget items, or a default list if none exist
+    // Send the budget items, or default list if NONE exist for THIS user
     if (budgets.length > 0) {
       res.json(budgets);
     } else {
-      // Send the default starting budgets from your blueprint
+      // Send the default starting budgets
       res.json([
         { id: "1", category: 'Food 🍕', planned: 12000 },
         { id: "2", category: 'Rent 🏠', planned: 15000 },
@@ -45,43 +42,32 @@ router.get('/', async (req, res) => {
 
 /**
  * @route   POST /api/budgets
- * @desc    Create or update a budget item (upsert)
- * @access  Public
+ * @desc    Create or update a budget item for current user
+ * @access  Public (Requires userId in body)
  */
 router.post('/', async (req, res) => {
+  const userId = getUserId(req);
   try {
     const { category, planned } = req.body;
-
+    
     if (!category || planned === undefined) {
       return res.status(400).json({ msg: 'Please provide category and planned amount' });
     }
 
-    // This query finds a budget document with a matching category
+    const budgetsRef = db.collection('users').doc(userId).collection('budgets');
     const snapshot = await budgetsRef.where('category', '==', category).limit(1).get();
 
     let docRef;
     if (snapshot.empty) {
-      // --- Create New Budget ---
-      // No document exists, so we create a new one
-      docRef = await budgetsRef.add({
-        category,
-        planned: parseFloat(planned)
-      });
+      docRef = await budgetsRef.add({ category, planned: parseFloat(planned) });
     } else {
-      // --- Update Existing Budget ---
-      // A document with this category exists, so we update it
       const docId = snapshot.docs[0].id;
       docRef = budgetsRef.doc(docId);
-      await docRef.update({
-        planned: parseFloat(planned)
-      });
+      await docRef.update({ planned: parseFloat(planned) });
     }
 
-    const doc = await docRef.get(); // Get the final document data
-    res.status(201).json({
-      id: doc.id,
-      ...doc.data()
-    });
+    const doc = await docRef.get();
+    res.status(201).json({ id: doc.id, ...doc.data() });
 
   } catch (err) {
     console.error(err.message);
