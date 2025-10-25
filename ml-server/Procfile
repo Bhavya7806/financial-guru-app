@@ -1,0 +1,2 @@
+# ml-server/Procfile
+web: gunicorn app:app
