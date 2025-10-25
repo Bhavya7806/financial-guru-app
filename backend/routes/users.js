@@ -155,5 +155,49 @@ router.get('/:userId/recommendations', async (req, res) => {
     res.status(500).send('Server Error: Failed to generate recommendations.');
   }
 });
+// --- Add this PUT route inside backend/routes/users.js ---
+
+/**
+ * @route   PUT /api/users/:userId/income
+ * @desc    Update user's monthly income
+ * @access  Public (for now)
+ */
+router.put('/:userId/income', async (req, res) => {
+  console.log(`-> HIT: PUT /api/users/${req.params.userId}/income`);
+  try {
+    const userId = req.params.userId;
+    const { monthlyIncome } = req.body; // Expect { "monthlyIncome": 55000 }
+
+    if (!userId) {
+      return res.status(400).json({ msg: 'User ID is required' });
+    }
+    if (monthlyIncome === undefined || isNaN(parseFloat(monthlyIncome)) || parseFloat(monthlyIncome) < 0) {
+      return res.status(400).json({ msg: 'Valid monthly income is required' });
+    }
+
+    const userDocRef = db.collection('users').doc(userId);
+
+    // Update only the monthlyIncome field
+    await userDocRef.update({
+      monthlyIncome: parseFloat(monthlyIncome)
+    });
+
+    console.log(`   Updated income for user: ${userId} to ${monthlyIncome}`);
+    // Fetch the updated document to return it (optional but good practice)
+    const updatedDoc = await userDocRef.get();
+    res.json({ id: updatedDoc.id, ...updatedDoc.data() }); // Return updated user data
+
+  } catch (err) {
+    // Check if the error is because the user wasn't found
+    if (err.code === 5) { // Firestore code for NOT_FOUND when updating non-existent doc
+        console.warn(`   Attempted to update income for non-existent user: ${req.params.userId}`);
+        return res.status(404).json({ msg: 'User not found' });
+    }
+    console.error("!!! PUT Income Error:", err);
+    res.status(500).send('Server Error: Failed to update income.');
+  }
+});
+
+
 
 module.exports = router;

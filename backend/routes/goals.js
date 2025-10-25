@@ -12,9 +12,10 @@ const goalsRef = db.collection('goals');
  * @access  Public
  */
 router.get('/', async (req, res) => {
+  console.log("-> HIT: GET /api/goals"); // Added log
   try {
     const snapshot = await goalsRef.orderBy('deadline', 'asc').get();
-    
+
     const goals = [];
     snapshot.forEach(doc => {
       goals.push({
@@ -22,20 +23,29 @@ router.get('/', async (req, res) => {
         ...doc.data()
       });
     });
-    
-    // Send the goals, or a default list if none exist
+    console.log(`   Fetched ${goals.length} goals.`); // Added log
+
+    // Send the goals, or a default list if none exist and DB is empty
     if (goals.length > 0) {
       res.json(goals);
     } else {
-      // Send the default starting goals from your blueprint
-      res.json([
-        { id: "1", title: 'Emergency Fund 🛡️', target: 50000, saved: 42000, deadline: '2025-10-31' },
-        { id: "2", title: 'Vacation Fund 🌴', target: 80000, saved: 25000, deadline: '2025-12-31' },
-        { id: "3", title: 'New Laptop 💻', target: 65000, saved: 18000, deadline: '2025-11-30' },
-      ]);
+       // Check if the collection truly exists but is empty
+       const collectionExists = await goalsRef.limit(1).get();
+       if (collectionExists.empty) {
+          console.log("   Goals collection is empty, sending default goals."); // Added log
+          // Send the default starting goals ONLY if the collection is empty
+          res.json([
+            { id: "1", title: 'Emergency Fund 🛡️', type: 'Emergency Fund', target: 50000, saved: 42000, deadline: '2025-10-31' },
+            { id: "2", title: 'Vacation Fund 🌴', type: 'Vacation/Travel', target: 80000, saved: 25000, deadline: '2025-12-31' },
+            { id: "3", title: 'New Laptop 💻', type: 'Big Purchase', target: 65000, saved: 18000, deadline: '2025-11-30' },
+          ]);
+       } else {
+           // Collection exists but query returned no results (shouldn't happen with current query)
+           res.json([]);
+       }
     }
   } catch (err) {
-    console.error(err.message);
+    console.error("!!! GET /api/goals Error:", err); // Updated log
     res.status(500).send('Server Error');
   }
 });
@@ -46,21 +56,30 @@ router.get('/', async (req, res) => {
  * @access  Public
  */
 router.post('/', async (req, res) => {
+  console.log("-> HIT: POST /api/goals");
   try {
-    const { title, target, saved, deadline } = req.body;
+    // Extract 'type' from req.body
+    const { title, target, saved, deadline, type } = req.body;
+    console.log("   Received Goal Data:", req.body);
 
-    if (!title || !target || saved === undefined || !deadline) {
-      return res.status(400).json({ msg: 'Please provide title, target, saved, and deadline' });
+    // Include 'type' in validation
+    if (!title || !target || saved === undefined || !deadline || !type) {
+        console.error("   Validation failed: Missing required goal data (incl. type)");
+      return res.status(400).json({ msg: 'Please provide title, target, saved, deadline, and type' });
     }
 
+    // Include 'type' when creating the object
     const newGoal = {
       title,
       target: parseFloat(target),
       saved: parseFloat(saved),
-      deadline
+      deadline,
+      type // Add the type here
     };
+    console.log("   Prepared Goal for Firestore:", newGoal);
 
     const docRef = await goalsRef.add(newGoal);
+    console.log(`   Goal saved successfully! Doc ID: ${docRef.id}`);
 
     res.status(201).json({
       id: docRef.id,
@@ -68,7 +87,7 @@ router.post('/', async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err.message);
+    console.error("!!! POST /api/goals Error:", err);
     res.status(500).send('Server Error');
   }
 });

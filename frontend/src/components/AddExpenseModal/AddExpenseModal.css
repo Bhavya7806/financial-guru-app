@@ -123,3 +123,42 @@
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(0, 86, 179, 0.4);
   }
+  /* --- Add to AddExpenseModal.css --- */
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end; /* Align buttons to the right */
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.modal-btn {
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-btn {
+  background-color: transparent;
+  color: #ccc;
+  border: 1px solid #ccc;
+}
+.clear-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-color: white;
+}
+
+.apply-btn { /* Similar to form-submit-btn */
+  background: linear-gradient(135deg, var(--primary-color), #0068d7);
+  color: white;
+}
+.apply-btn:hover {
+  transform: translateY(-1px);
+}

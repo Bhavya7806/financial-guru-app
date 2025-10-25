@@ -177,3 +177,197 @@
     margin-left: 1.5rem;
     color: var(--text-dark);
   }
+  /* --- Add these styles to GoalsPage.css --- */
+
+/* Wizard Container */
+.wizard-container {
+  padding-top: 1rem;
+  position: relative; /* For close button */
+}
+
+.wizard-steps {
+  display: flex;
+  justify-content: space-around; /* Space out steps */
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.wizard-step {
+  padding: 0.5rem 1rem;
+  border-radius: 16px; /* Pill shape */
+  background: var(--bg-light);
+  color: var(--text-light);
+  font-weight: 500;
+  font-size: 0.9rem;
+  border: 1px solid var(--border-color);
+}
+
+.wizard-step.active {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  font-weight: 600;
+}
+
+.wizard-content {
+  text-align: center;
+}
+
+.wizard-content h4 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: var(--text-dark);
+}
+
+/* Step 1 Options */
+.wizard-options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.wizard-options button {
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
+  padding: 0.8rem 1.2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 150px; /* Ensure buttons have some width */
+}
+.wizard-options button:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background-color: #f0f7ff; /* Light blue tint */
+}
+
+/* Step 2 & 3 Inputs */
+.wizard-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 400px;
+  margin: 0 auto; /* Center inputs */
+  text-align: left;
+}
+
+.input-group-wizard label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--text-light);
+}
+
+.input-group-wizard input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 1rem;
+  color: var(--text-dark);
+}
+.input-group-wizard input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+}
+
+/* Wizard Navigation */
+.wizard-navigation {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+}
+
+.wizard-btn {
+  padding: 0.7rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.back-btn {
+  background-color: var(--bg-light);
+  color: var(--text-light);
+  border: 1px solid var(--border-color);
+}
+.back-btn:hover {
+   background-color: var(--border-color);
+   color: var(--text-dark);
+}
+
+.next-btn {
+  background: var(--primary-color);
+  color: white;
+}
+.next-btn:hover {
+   background: #0068d7;
+}
+.next-btn:disabled {
+   background: var(--text-light);
+   cursor: not-allowed;
+}
+
+.finish-btn { /* Reuses onboarding style */
+   background: linear-gradient(135deg, var(--success-color), #218838);
+   box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+   color: white;
+}
+.finish-btn:hover {
+   background: linear-gradient(135deg, #218838, #1e7e34);
+   box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4);
+}
+.finish-btn:disabled {
+   background: var(--text-light);
+   cursor: not-allowed;
+   box-shadow: none;
+}
+
+.wizard-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: transparent;
+  border: none;
+  color: var(--text-light);
+  font-size: 1.5rem; /* Smaller close button */
+  cursor: pointer;
+}
+.wizard-close-btn:hover {
+  color: var(--text-dark);
+}
+/* --- Add these styles to GoalsPage.css --- */
+
+.filter-container {
+  margin-bottom: 1.5rem;
+  text-align: right; /* Position filter to the right */
+}
+
+.filter-container label {
+  margin-right: 0.5rem;
+  font-weight: 500;
+  color: var(--text-light);
+}
+
+.filter-container select {
+  padding: 0.5rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-white);
+  font-size: 0.9rem;
+}
+.filter-container select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+}

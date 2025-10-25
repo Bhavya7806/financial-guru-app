@@ -3,51 +3,46 @@ import './BudgetPage.css';
 import DashboardCard from '../../components/DashboardCard/DashboardCard';
 import axios from 'axios';
 import { auth } from '../../firebase'; // Import auth to get user ID
+import EditBudgetModal from '../../components/EditBudgetModal/EditBudgetModal'; // Import the new modal
 
-// Define API endpoints
-// Define API endpoints
-const BUDGETS_API_URL = 'http://localhost:8081/api/budgets'; // Use new port 8081
-const EXPENSES_API_URL = 'http://localhost:8081/api/expenses'; // Use new port 8081
-const USER_API_URL = 'http://localhost:8081/api/users'; // Use new port 8081// Add User API URL
+// Define API endpoints (ensure port is correct, e.g., 8081)
+const BUDGETS_API_URL = 'http://localhost:8081/api/budgets';
+const EXPENSES_API_URL = 'http://localhost:8081/api/expenses';
+const USER_API_URL = 'http://localhost:8081/api/users';
 
 const BudgetPage = () => {
   const [budgets, setBudgets] = useState([]);
   const [expenses, setExpenses] = useState([]);
-  // Set income to null initially
   const [income, setIncome] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(''); // Add error state
+  const [error, setError] = useState('');
+  // State for the Edit Budget Modal
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [budgetToEdit, setBudgetToEdit] = useState(null); // State to hold the item being edited
 
-  // --- Updated useEffect Hook ---
+  // Fetch initial data (budgets, expenses, user income)
   useEffect(() => {
     setError('');
-    setLoading(true); // Start loading
+    setLoading(true);
 
     const fetchData = async (userId) => {
-      // Make sure userId is valid before proceeding
       if (!userId) {
         setError("User ID not found. Cannot fetch data.");
         setLoading(false);
         return;
       }
-      
       try {
-        console.log(`Fetching data for user: ${userId}`); // Log the user ID
-        
+        console.log(`Fetching data for user: ${userId}`);
         const [budgetsRes, expensesRes, userRes] = await Promise.all([
           axios.get(BUDGETS_API_URL),
           axios.get(EXPENSES_API_URL),
-          axios.get(`${USER_API_URL}/${userId}`) // Use the validated userId
+          axios.get(`${USER_API_URL}/${userId}`)
         ]);
-
         setBudgets(budgetsRes.data);
         setExpenses(expensesRes.data);
-        // Set income from user data (use a default if not set)
         setIncome(userRes.data.monthlyIncome || 0);
-
       } catch (err) {
         console.error("Error fetching data: ", err);
-        // Add more specific error for 404
         if (err.response && err.response.status === 404) {
              setError("User profile not found. Please complete onboarding.");
         } else {
@@ -58,27 +53,21 @@ const BudgetPage = () => {
       }
     };
 
-    // Use onAuthStateChanged to wait for Firebase auth state
     const unsubscribe = auth.onAuthStateChanged(user => {
       if (user) {
-        // User is logged in, now we can safely call fetchData
-        fetchData(user.uid); 
+        fetchData(user.uid);
       } else {
-        // User is logged out
         setError("Please log in to view your budget.");
-        setBudgets([]); // Clear data
+        setBudgets([]);
         setExpenses([]);
         setIncome(null);
         setLoading(false);
       }
     });
+    return () => unsubscribe();
+  }, []);
 
-    return () => unsubscribe(); // Cleanup listener on unmount
-
-  }, []); // Empty dependency array means this runs once on mount
-  // --- End of Updated useEffect Hook ---
-
-  // Calculate category totals (corrected logic)
+  // Calculate spending per category
   const categorySpending = useMemo(() => {
     const spending = {};
     budgets.forEach(budget => {
@@ -91,7 +80,6 @@ const BudgetPage = () => {
       else if (expense.category === 'Transportation') budgetCategory = 'Transport 🚗';
       else if (expense.category === 'Bills') budgetCategory = 'Bills 💼';
       else if (expense.category === 'Entertainment') budgetCategory = 'Fun 🎉';
-      
       if (budgetCategory && spending[budgetCategory] !== undefined) {
         spending[budgetCategory] += expense.amount;
       }
@@ -99,10 +87,10 @@ const BudgetPage = () => {
     return spending;
   }, [budgets, expenses]);
 
-  // Calculate totals for the overview card
+  // Calculate overview totals
   const { totalPlanned, totalSpent, totalLeft } = useMemo(() => {
     const spendingBudgets = budgets.filter(b => !b.category.includes('Savings'));
-    const totalPlanned = spendingBudgets.reduce((acc, b) => acc + b.planned, 0);
+    const totalPlanned = spendingBudgets.reduce((acc, b) => acc + (b.planned || 0), 0); // Handle potential undefined planned
     const totalSpent = Object.keys(categorySpending)
       .filter(key => !key.includes('Savings'))
       .reduce((acc, key) => acc + categorySpending[key], 0);
@@ -110,14 +98,40 @@ const BudgetPage = () => {
     return { totalPlanned, totalSpent, totalLeft };
   }, [budgets, categorySpending]);
 
-  // Helper to get progress bar color
+  // Helper for progress bar color
   const getProgressColor = (spent, planned) => {
-    if (planned === 0) return 'var(--border-color)';
+    if (!planned || planned === 0) return 'var(--border-color)';
     const percent = (spent / planned) * 100;
     if (percent >= 100) return '#DC3545'; // Red
     if (percent > 80) return '#FFC107'; // Yellow
     return 'var(--primary-color)'; // Blue/Green
   };
+
+  // --- Modal Handler Functions ---
+  const openEditModal = (budget) => {
+    setBudgetToEdit(budget);
+    setIsEditModalOpen(true);
+  };
+
+  const closeEditModal = () => {
+    setIsEditModalOpen(false);
+    setBudgetToEdit(null);
+  };
+
+  const handleBudgetSaved = (updatedBudget) => {
+    // Update the budget list in the state
+    setBudgets(prevBudgets =>
+      prevBudgets.map(b =>
+        // Match by category OR id if available from backend response
+        (b.category === updatedBudget.category || b.id === updatedBudget.id)
+          ? { ...b, ...updatedBudget } // Merge updates, keep existing id if not in response
+          : b
+      )
+    );
+    // Recalculations happen automatically via useMemo
+  };
+  // --- End Modal Handlers ---
+
 
   // Show loading or error state
   if (loading) {
@@ -129,7 +143,7 @@ const BudgetPage = () => {
 
   return (
     <div className="budget-container">
-      {/* 1. HEADER */}
+      {/* Header */}
       <header className="budget-header">
         <h1>Budget • {new Date().toLocaleString('default', { month: 'long' })} {new Date().getFullYear()}</h1>
         <div className="income-display">
@@ -137,27 +151,15 @@ const BudgetPage = () => {
         </div>
       </header>
 
-      {/* 2. BUDGET OVERVIEW */}
+      {/* Budget Overview */}
       <div className="budget-overview-grid">
-        <DashboardCard title="Planned">
-          <div className="overview-stat">₹{totalPlanned.toLocaleString('en-IN')}</div>
-        </DashboardCard>
-        <DashboardCard title="Spent">
-          <div className="overview-stat">₹{totalSpent.toLocaleString('en-IN')}</div>
-        </DashboardCard>
-        <DashboardCard title="Left">
-          <div className="overview-stat" style={{ color: totalLeft < 0 ? '#DC3545' : 'var(--success-color)' }}>
-            ₹{totalLeft.toLocaleString('en-IN')}
-          </div>
-        </DashboardCard>
-        <DashboardCard title="Status">
-          <div className="overview-stat" style={{ color: 'var(--success-color)' }}>
-            🟢 Good
-          </div>
-        </DashboardCard>
+        <DashboardCard title="Planned"><div className="overview-stat">₹{totalPlanned.toLocaleString('en-IN')}</div></DashboardCard>
+        <DashboardCard title="Spent"><div className="overview-stat">₹{totalSpent.toLocaleString('en-IN')}</div></DashboardCard>
+        <DashboardCard title="Left"><div className="overview-stat" style={{ color: totalLeft < 0 ? '#DC3545' : 'var(--success-color)' }}>₹{totalLeft.toLocaleString('en-IN')}</div></DashboardCard>
+        <DashboardCard title="Status"><div className="overview-stat" style={{ color: 'var(--success-color)' }}>🟢 Good</div></DashboardCard>
       </div>
 
-      {/* 3. INTERACTIVE BUDGET ALLOCATOR */}
+      {/* Interactive Budget Allocator */}
       <div className="allocator-card">
         <header className="allocator-header">
           <span className="col-category">Category</span>
@@ -166,25 +168,25 @@ const BudgetPage = () => {
           <span className="col-progress">Progress</span>
           <span className="col-action">Action</span>
         </header>
-        
+
         <div className="allocator-body">
           {budgets.map((budget) => {
             const spent = categorySpending[budget.category] || 0;
             const planned = budget.planned || 0;
             const percent = planned > 0 ? (spent / planned) * 100 : 0;
             const isSavings = budget.category.includes('Savings');
-            
+
             return (
-              <div className="allocator-row" key={budget.category}>
+              <div className="allocator-row" key={budget.id || budget.category}> {/* Use id if available */}
                 <span className="col-category">{budget.category}</span>
                 <span className="col-budget">₹{planned.toLocaleString('en-IN')}</span>
                 <span className="col-spent">{isSavings ? '---' : `₹${spent.toLocaleString('en-IN')}`}</span>
                 <span className="col-progress">
                   {!isSavings && (
                     <div className="progress-bar-container">
-                      <div 
+                      <div
                         className="progress-bar"
-                        style={{ 
+                        style={{
                           width: `${Math.min(percent, 100)}%`,
                           backgroundColor: getProgressColor(spent, planned)
                         }}
@@ -193,7 +195,10 @@ const BudgetPage = () => {
                   )}
                 </span>
                 <span className="col-action">
-                  <button className="action-btn">⚙️</button>
+                  {/* Call openEditModal when gear is clicked */}
+                  <button className="action-btn" onClick={() => openEditModal(budget)}>
+                    ⚙️
+                  </button>
                 </span>
               </div>
             );
@@ -201,7 +206,7 @@ const BudgetPage = () => {
         </div>
       </div>
 
-      {/* 4. SCENARIO PLANNER */}
+      {/* Scenario Planner */}
       <div className="scenario-grid">
         <DashboardCard title="🎯 What-if Simulator">
           <div className="scenario-content">
@@ -217,6 +222,15 @@ const BudgetPage = () => {
           </div>
         </DashboardCard>
       </div>
+
+      {/* Edit Budget Modal */}
+      {isEditModalOpen && (
+        <EditBudgetModal
+          budgetToEdit={budgetToEdit}
+          onClose={closeEditModal}
+          onBudgetSaved={handleBudgetSaved}
+        />
+      )}
     </div>
   );
 };

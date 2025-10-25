@@ -3,7 +3,7 @@ import './AddExpenseModal.css';
 import axios from 'axios'; // 1. Import axios
 
 // 2. Define your API endpoint
-const API_URL = 'http://localhost:3001/api/expenses';
+const API_URL = 'http://localhost:8081/api/expenses'; // Use the correct port;
 
 const AddExpenseModal = ({ onClose, onAddExpense }) => {
   const [description, setDescription] = useState('');
