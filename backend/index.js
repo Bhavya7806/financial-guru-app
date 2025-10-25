@@ -11,7 +11,7 @@ const FIREBASE_CONFIG_BASE64 = process.env.FIREBASE_CONFIG_BASE64;
 
 if (!FIREBASE_CONFIG_BASE64) {
   console.error("FATAL ERROR: FIREBASE_CONFIG_BASE64 is missing.");
-  process.exit(1); 
+  // process.exit(1); 
 }
 const serviceAccount = JSON.parse(Buffer.from(FIREBASE_CONFIG_BASE64, 'base64').toString('ascii'));
 
@@ -27,7 +27,7 @@ module.exports = { db, auth };
 
 // 4. INITIALIZE APP & PORT
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 10000;
 
 // 5. APPLY MIDDLEWARE
 app.use(cors());

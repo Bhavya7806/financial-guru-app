@@ -6,7 +6,7 @@ const { db } = require('../index');
 const axios = require('axios');
 
 // Define the base URL for your Python ML server
-const ML_SERVER_BASE_URL = 'http://localhost:8082'; // Use the correct port
+const ML_SERVER_BASE_URL = process.env.ML_SERVER_BASE_URL || 'http://localhost:8082'; // Use the correct port
 
 // Helper to get UID from query or body (Temporary for unsecured API)
 const getUserId = (req) => req.query.userId || req.body.userId || 'default_user';

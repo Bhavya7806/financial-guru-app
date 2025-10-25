@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import '../AddExpenseModal/AddExpenseModal.css'; 
 
-const API_URL = 'http://localhost:8081/api/goals';
+const API_URL = `${import.meta.env.VITE_BACKEND_API_URL}/goals`;
 
 // CRITICAL: Receive userId prop
 const AddGoalModal = ({ onClose, onAddGoal, userId }) => { 

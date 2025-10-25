@@ -1,0 +1,5 @@
+# ml-server/requirements.txt
+Flask
+pandas
+flask-cors
+gunicorn  # <-- CRITICAL: Gunicorn is the production web server

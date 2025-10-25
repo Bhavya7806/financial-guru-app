@@ -4,7 +4,7 @@ import axios from 'axios';
 import { auth } from '../../firebase';
 
 // Use the correct port (e.g., 8081)
-const USER_API_URL = 'http://localhost:8081/api/users';
+const USER_API_URL = `${import.meta.env.VITE_BACKEND_API_URL}/users`;
 
 const SettingsPage = () => {
   const [userData, setUserData] = useState(null);
