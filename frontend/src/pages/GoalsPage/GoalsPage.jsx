@@ -6,7 +6,7 @@ import AddGoalModal from '../../components/AddGoalModal/AddGoalModal';
 import { auth } from '../../firebase'; 
 
 // API Endpoints (ensure port is correct)
-const API_BASE_URL = 'http://localhost:8081/api';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL;
 const GOALS_API_URL = `${API_BASE_URL}/goals`;
 const USER_API_URL = `${API_BASE_URL}/users`;
 

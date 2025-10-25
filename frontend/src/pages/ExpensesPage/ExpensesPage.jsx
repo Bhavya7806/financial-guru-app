@@ -8,7 +8,7 @@ import axios from 'axios';
 import { auth } from '../../firebase'; // CRITICAL: Import auth
 
 // Use the correct port for your Node server (e.g., 8081 if you changed it)
-const API_BASE_URL = 'http://localhost:8081/api/expenses';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL;
 
 const ExpensesPage = () => {
   const [expenses, setExpenses] = useState([]);

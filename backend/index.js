@@ -7,14 +7,13 @@ require('dotenv').config();
 const admin = require('firebase-admin');
 
 // 2. INITIALIZE FIREBASE ADMIN SDK
-const serviceAccountKeyPath = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH;
+const FIREBASE_CONFIG_BASE64 = process.env.FIREBASE_CONFIG_BASE64;
 
-if (!serviceAccountKeyPath) {
-  console.error("FATAL ERROR: FIREBASE_SERVICE_ACCOUNT_KEY_PATH is not set in .env");
-  process.exit(1); // Stop the app if the key path is not set
+if (!FIREBASE_CONFIG_BASE64) {
+  console.error("FATAL ERROR: FIREBASE_CONFIG_BASE64 is missing.");
+  process.exit(1); 
 }
-
-const serviceAccount = require(serviceAccountKeyPath);
+const serviceAccount = JSON.parse(Buffer.from(FIREBASE_CONFIG_BASE64, 'base64').toString('ascii'));
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)

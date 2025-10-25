@@ -7,7 +7,7 @@ import axios from 'axios';
 import { auth } from '../../firebase'; 
 
 // API Endpoints (Ensure port is correct)
-const API_BASE_URL = 'http://localhost:8081/api';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL;
 const API_EXPENSES_URL = `${API_BASE_URL}/expenses`;
 const API_BUDGETS_URL = `${API_BASE_URL}/budgets`;
 const API_GOALS_URL = `${API_BASE_URL}/goals`;

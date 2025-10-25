@@ -6,7 +6,7 @@ import { auth } from '../../firebase';
 import EditBudgetModal from '../../components/EditBudgetModal/EditBudgetModal';
 
 // Define API endpoints (ensure port is correct)
-const API_BASE_URL = 'http://localhost:8081/api';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL;
 const BUDGETS_API_URL = `${API_BASE_URL}/budgets`;
 const EXPENSES_API_URL = `${API_BASE_URL}/expenses`;
 const USER_API_URL = `${API_BASE_URL}/users`;
