@@ -73,6 +73,7 @@ const OnboardingPage = ({ setOnboardingComplete }) => {
     try {
       // 2. Send data to the backend (Saves to Firestore)
       await axios.post('http://localhost:8081/api/users/onboarding', onboardingPayload);
+      await axios.post(`${import.meta.env.VITE_BACKEND_API_URL}/users/onboarding`, onboardingPayload);
 
       console.log("Onboarding data sent successfully!");
 
