@@ -4,6 +4,9 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../../firebase'; // CRITICAL: Import auth to get the current user UID
 
+// Define the live API base URL using the environment variable
+const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL;
+
 // Define the list of goals
 const FINANCIAL_GOALS = [
   'Build emergency fund',
@@ -15,17 +18,10 @@ const FINANCIAL_GOALS = [
 
 // CRITICAL: Receive setOnboardingComplete prop from App.jsx
 const OnboardingPage = ({ setOnboardingComplete }) => { 
-  // State to track the current step (1 or 2)
   const [currentStep, setCurrentStep] = useState(1);
-
-  // State for Step 1
   const [selectedGoals, setSelectedGoals] = useState([]);
-
-  // State for Step 2
   const [monthlyIncome, setMonthlyIncome] = useState('');
   const [monthlyExpenses, setMonthlyExpenses] = useState('');
-
-  // Initialize navigate
   const navigate = useNavigate();
 
   // Calculated savings rate for display
@@ -54,14 +50,14 @@ const OnboardingPage = ({ setOnboardingComplete }) => {
 
   // --- Final handleFinish function for seamless redirect ---
   const handleFinish = async () => {
-    // 1. CRITICAL FIX: Get User ID directly from Firebase Auth
+    // 1. Get User ID directly from Firebase Auth
     const firebaseUser = auth.currentUser; 
     
     if (!firebaseUser || !firebaseUser.uid) {
         alert("Authentication Error: Please log in again.");
         return; 
     }
-    const USER_UID = firebaseUser.uid; // Use the real UID!
+    const USER_UID = firebaseUser.uid; 
 
     const onboardingPayload = {
       userId: USER_UID, // Pass the dynamic UID
@@ -71,9 +67,8 @@ const OnboardingPage = ({ setOnboardingComplete }) => {
     };
 
     try {
-      // 2. Send data to the backend (Saves to Firestore)
-      await axios.post('http://localhost:8081/api/users/onboarding', onboardingPayload);
-      await axios.post(`${import.meta.env.VITE_BACKEND_API_URL}/users/onboarding`, onboardingPayload);
+      // 2. CRITICAL FIX: Use the single, dynamic API URL for all environments
+      await axios.post(`${API_BASE_URL}/users/onboarding`, onboardingPayload);
 
       console.log("Onboarding data sent successfully!");
 
@@ -87,7 +82,8 @@ const OnboardingPage = ({ setOnboardingComplete }) => {
 
     } catch (err) {
       console.error("Error saving onboarding data:", err);
-      alert("Failed to save onboarding data. Please try again.");
+      // Ensure error message is user-friendly and not the raw Axios error
+      alert("Failed to save onboarding data. Please check Render logs for details.");
     }
   };
 
