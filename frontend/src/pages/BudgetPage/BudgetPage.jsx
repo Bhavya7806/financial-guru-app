@@ -6,7 +6,7 @@ import { auth } from '../../firebase';
 import EditBudgetModal from '../../components/EditBudgetModal/EditBudgetModal';
 
 // Define API endpoints (ensure port is correct)
-const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL;
+const API_BASE_URL = 'http://localhost:8081/api';
 const BUDGETS_API_URL = `${API_BASE_URL}/budgets`;
 const EXPENSES_API_URL = `${API_BASE_URL}/expenses`;
 const USER_API_URL = `${API_BASE_URL}/users`;
@@ -15,12 +15,14 @@ const BudgetPage = () => {
   const [budgets, setBudgets] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [income, setIncome] = useState(null);
-  // CRITICAL: New state for Estimated Expenses from onboarding
   const [estimatedExpenses, setEstimatedExpenses] = useState(0); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [budgetToEdit, setBudgetToEdit] = useState(null); 
+  
+  // CRITICAL FIX: State to force data refresh
+  const [dataVersion, setDataVersion] = useState(0); 
 
   // Fetch initial data (budgets, expenses, user income, and estimate)
   useEffect(() => {
@@ -43,7 +45,6 @@ const BudgetPage = () => {
         setBudgets(budgetsRes.data);
         setExpenses(expensesRes.data);
         setIncome(userData.monthlyIncome || 0);
-        // CRITICAL FIX: Set the estimated expenses state from user data
         setEstimatedExpenses(userData.estimatedMonthlyExpenses || 0); 
 
       } catch (err) {
@@ -56,7 +57,7 @@ const BudgetPage = () => {
       } finally { setLoading(false); }
     };
     fetchData();
-  }, []); 
+  }, [dataVersion]); // Dependency added to force re-fetch after saving
 
   // Calculate spending per category
   const categorySpending = useMemo(() => {
@@ -79,10 +80,10 @@ const BudgetPage = () => {
     return spending;
   }, [budgets, expenses]);
 
-  // Calculate overview totals (FINAL CORRECTED LOGIC)
+  // Calculate overview totals (Uses estimated expenses for Planned)
   const { totalPlanned, totalSpent, totalLeft } = useMemo(() => {
     
-    // 1. CRITICAL FIX: Planned is the estimated total expenses from onboarding
+    // 1. Planned is the estimated total expenses from onboarding
     const totalPlanned = estimatedExpenses; 
 
     // 2. Calculate total spent (sum of all actual expenses excluding savings)
@@ -117,15 +118,9 @@ const BudgetPage = () => {
   };
 
   const handleBudgetSaved = (updatedBudget) => {
-    // CRITICAL: Ensure a new array reference is created to trigger useMemo
-    setBudgets(prevBudgets => {
-      const newBudgets = prevBudgets.map(b => 
-        (b.category === updatedBudget.category || b.id === updatedBudget.id)
-          ? updatedBudget 
-          : b
-      );
-      return newBudgets;
-    });
+    // CRITICAL FIX: Increment dataVersion to force a complete re-fetch from the server
+    setDataVersion(prev => prev + 1); 
+    closeEditModal(); // Close modal immediately
   };
   // --- End Modal Handlers ---
 

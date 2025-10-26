@@ -1,7 +1,10 @@
+// --- src/components/EditBudgetModal/EditBudgetModal.jsx ---
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../AddExpenseModal/AddExpenseModal.css'; 
 
+// CRITICAL FIX: Use the dynamic environment variable base URL
 const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL;
 const BUDGETS_API_URL = `${API_BASE_URL}/budgets`;
 
@@ -27,7 +30,7 @@ const EditBudgetModal = ({ budgetToEdit, onClose, onBudgetSaved, userId }) => {
 
 
     try {
-      // CRITICAL FIX: Add userId to the payload
+      // Use the corrected dynamic URL:
       const response = await axios.post(BUDGETS_API_URL, {
         category: budgetToEdit.category, 
         planned: newAmount,
@@ -38,7 +41,7 @@ const EditBudgetModal = ({ budgetToEdit, onClose, onBudgetSaved, userId }) => {
       onClose();
     } catch (err) {
       console.error("Error saving budget:", err);
-      setError("Failed to save budget. Please try again.");
+      setError("Failed to save budget. Please check server logs.");
     } finally { setLoading(false); }
   };
 
