@@ -56,7 +56,7 @@ router.post('/', async (req, res) => {
       description, amount: parseFloat(amount), date, category,
       createdAt: new Date().toISOString()
     };
-    
+    console.log(`[DEBUG] Attempting to save expense for user: ${userId}`);
     // CRITICAL FIX: Add to the user's specific subcollection
     const docRef = await db.collection('users').doc(userId).collection('expenses').add(newExpense);
 
