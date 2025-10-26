@@ -5,7 +5,7 @@ import axios from 'axios';
 import { auth } from '../../firebase'; 
 import EditBudgetModal from '../../components/EditBudgetModal/EditBudgetModal';
 
-// Define API endpoints (ensure port is correct)
+// CRITICAL FIX: Use the dynamic environment variable base URL
 const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL;
 const BUDGETS_API_URL = `${API_BASE_URL}/budgets`;
 const EXPENSES_API_URL = `${API_BASE_URL}/expenses`;
@@ -21,7 +21,6 @@ const BudgetPage = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [budgetToEdit, setBudgetToEdit] = useState(null); 
   
-  // CRITICAL FIX: State to force data refresh
   const [dataVersion, setDataVersion] = useState(0); 
 
   // Fetch initial data (budgets, expenses, user income, and estimate)
@@ -34,6 +33,7 @@ const BudgetPage = () => {
 
     const fetchData = async () => {
       try {
+        // All calls use the correct dynamic URL
         const [budgetsRes, expensesRes, userRes] = await Promise.all([
           axios.get(`${BUDGETS_API_URL}?userId=${userId}`),
           axios.get(`${EXPENSES_API_URL}?userId=${userId}`),
@@ -57,7 +57,7 @@ const BudgetPage = () => {
       } finally { setLoading(false); }
     };
     fetchData();
-  }, [dataVersion]); // Dependency added to force re-fetch after saving
+  }, [dataVersion]); 
 
   // Calculate spending per category
   const categorySpending = useMemo(() => {
@@ -67,11 +67,17 @@ const BudgetPage = () => {
     });
     expenses.forEach(expense => {
       let budgetCategory;
-      if (expense.category.includes('Food')) budgetCategory = 'Food 🍕'; 
-      else if (expense.category.includes('Housing')) budgetCategory = 'Rent 🏠';
-      else if (expense.category.includes('Transportation')) budgetCategory = 'Transport 🚗';
-      else if (expense.category.includes('Bills')) budgetCategory = 'Bills 💼';
-      else if (expense.category.includes('Entertainment')) budgetCategory = 'Fun 🎉';
+      const expenseCat = expense.category || '';
+
+      if (expenseCat.includes('Food')) budgetCategory = 'Food 🍕'; 
+      else if (expenseCat.includes('Housing')) budgetCategory = 'Rent 🏠';
+      else if (expenseCat.includes('Transportation')) budgetCategory = 'Transport 🚗';
+      else if (expenseCat.includes('Bills')) budgetCategory = 'Bills 💼';
+      else if (expenseCat.includes('Entertainment')) budgetCategory = 'Fun 🎉';
+      else {
+          const exactMatch = budgets.find(b => b.category === expenseCat);
+          if (exactMatch) budgetCategory = expenseCat;
+      }
       
       if (budgetCategory && spending[budgetCategory] !== undefined) {
         spending[budgetCategory] += expense.amount;
@@ -80,11 +86,17 @@ const BudgetPage = () => {
     return spending;
   }, [budgets, expenses]);
 
-  // Calculate overview totals (Uses estimated expenses for Planned)
+  // Calculate overview totals (Final Corrected Logic)
   const { totalPlanned, totalSpent, totalLeft } = useMemo(() => {
     
-    // 1. Planned is the estimated total expenses from onboarding
-    const totalPlanned = estimatedExpenses; 
+    // 1. Planned is the SUM of all individual planned budget rows (excluding savings)
+    const totalPlanned = budgets.reduce((acc, budget) => {
+        // Ensure planned is a number and exclude the 'Savings' category
+        if (!budget.category.includes('Savings')) {
+            return acc + (Number(budget.planned) || 0);
+        }
+        return acc;
+    }, 0);
 
     // 2. Calculate total spent (sum of all actual expenses excluding savings)
     const totalSpent = Object.keys(categorySpending)
@@ -95,7 +107,7 @@ const BudgetPage = () => {
     const totalLeft = totalPlanned - totalSpent;
     
     return { totalPlanned, totalSpent, totalLeft };
-  }, [estimatedExpenses, categorySpending]); 
+  }, [budgets, categorySpending]); 
 
   // Helper for progress bar color
   const getProgressColor = (spent, planned) => {
@@ -120,7 +132,7 @@ const BudgetPage = () => {
   const handleBudgetSaved = (updatedBudget) => {
     // CRITICAL FIX: Increment dataVersion to force a complete re-fetch from the server
     setDataVersion(prev => prev + 1); 
-    closeEditModal(); // Close modal immediately
+    closeEditModal(); 
   };
   // --- End Modal Handlers ---
 
