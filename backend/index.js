@@ -9,36 +9,41 @@ const admin = require('firebase-admin');
 // 2. INITIALIZE FIREBASE ADMIN SDK
 const FIREBASE_CONFIG_BASE64 = process.env.FIREBASE_CONFIG_BASE64; 
     
-if (!FIREBASE_CONFIG_BASE64) {
-  console.error("FATAL ERROR: FIREBASE_CONFIG_BASE64 is missing.");
-  // For production environments, you might want to call process.exit(1) here
-}
+let serviceAccount = null;
+let db = null;
+let auth = null;
 
-// Decode the Base64 string back into a JSON object
-let serviceAccount;
 try {
+  if (!FIREBASE_CONFIG_BASE64) {
+    console.error("FATAL ERROR: FIREBASE_CONFIG_BASE64 is missing. Check Render Environment variables.");
+    throw new Error("Missing Base64 Config");
+  }
+
+  // Decode the Base64 string back into a JSON object
   serviceAccount = JSON.parse(Buffer.from(FIREBASE_CONFIG_BASE64, 'base64').toString('ascii'));
+
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+  
+  // If initialization succeeds, set the database and auth objects
+  db = admin.firestore();
+  auth = admin.auth();
+  console.log("SUCCESS: Firebase Admin SDK initialized.");
+
 } catch (e) {
-  console.error("FATAL ERROR: Could not decode or parse FIREBASE_CONFIG_BASE64.");
-  // process.exit(1);
-}
-
-if (serviceAccount) {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount)
-    });
+  console.error(`SERVER STARTUP FAILED: Firebase initialization error: ${e.message}`);
+  // If the key is bad, db and auth remain null, which prevents crashing later
 }
 
 
-// 3. EXPORT FIREBASE SERVICES (Only if initialized)
-const db = admin.apps.length ? admin.firestore() : null;
-const auth = admin.apps.length ? admin.auth() : null;
+// 3. EXPORT FIREBASE SERVICES
+// Export the initialized (or null) objects
 module.exports = { db, auth };
 
 
 // 4. INITIALIZE APP & PORT
 const app = express();
-// CRITICAL FIX: Prioritize Render's assigned port, otherwise use local default 8081
 const PORT = process.env.PORT || 8081; 
 
 // 5. APPLY MIDDLEWARE
@@ -49,7 +54,7 @@ app.use(express.json());
 // 6. DEFINE ROUTES
 // Test route
 app.get('/', (req, res) => {
-  res.json({ message: "Welcome to the Financial Guru API! 💰 (Firebase Status: " + (db ? "Connected" : "Error") + ")" });
+  res.json({ message: "Welcome to the Financial Guru API! 💰 (Status: " + (db ? "Connected" : "ERROR - DB OFFLINE") + ")" });
 });
 
 // Mount all routers
@@ -65,5 +70,6 @@ if (db) {
       console.log(`Server is running on http://0.0.0.0:${PORT}`);
     });
 } else {
-    console.error("Server startup aborted: Firebase was not initialized.");
+    // If Firebase initialization failed, the server cannot function.
+    console.error("Server startup aborted: Database connection failed.");
 }
