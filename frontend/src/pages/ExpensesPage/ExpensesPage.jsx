@@ -7,8 +7,8 @@ import DateFilterModal from '../../components/DateFilterModal/DateFilterModal';
 import axios from 'axios';
 import { auth } from '../../firebase'; // CRITICAL: Import auth
 
-// Use the correct port for your Node server (e.g., 8081 if you changed it)
-const API_BASE_URL = 'http://localhost:8081/api';
+// CRITICAL FIX: Use the dynamic environment variable base URL
+const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL;
 const EXPENSES_API_URL = `${API_BASE_URL}/expenses`;
 
 const ExpensesPage = () => {
@@ -22,31 +22,30 @@ const ExpensesPage = () => {
   const [startDateFilter, setStartDateFilter] = useState(''); 
   const [endDateFilter, setEndDateFilter] = useState(''); 
   
-  // CRITICAL FIX: State to force data refresh
   const [dataVersion, setDataVersion] = useState(0); 
 
   // --- Fetch Expenses (Runs on mount and when dataVersion changes) ---
   useEffect(() => {
     setLoading(true);
-    const userId = auth.currentUser?.uid; // CRITICAL: Get user ID
+    const userId = auth.currentUser?.uid; 
 
     if (!userId) { setLoading(false); return; }
 
     const fetchExpenses = async () => {
       try {
-        // CRITICAL FIX: Send userId as a query parameter
+        // FIX: Constructs URL using the correct dynamic base
         const response = await axios.get(`${EXPENSES_API_URL}?userId=${userId}`); 
         const sortedExpenses = response.data.sort((a, b) => new Date(b.date) - new Date(a.date));
         setExpenses(sortedExpenses);
       } catch (err) {
         console.error("Error fetching expenses: ", err);
-        setExpenses([]); // Ensure state is explicitly empty on error
+        setExpenses([]); 
       } finally {
         setLoading(false);
       }
     };
     fetchExpenses();
-  }, [dataVersion]); // DEPENDENCY ADDED: Runs when data is saved/refreshed
+  }, [dataVersion]); 
 
   // --- Fetch Timeline Insight ---
   useEffect(() => {
@@ -56,7 +55,8 @@ const ExpensesPage = () => {
     const fetchTimelineInsight = async () => {
       setLoadingInsight(true);
       try {
-        const response = await axios.get(`${API_BASE_URL}/timeline?userId=${userId}`);
+        // FIX: Constructs URL using the correct dynamic base
+        const response = await axios.get(`${EXPENSES_API_URL}/timeline?userId=${userId}`);
         setTimelineInsight(response.data.insight || "Could not generate timeline insight.");
       } catch (err) {
         console.error("Error fetching timeline insight:", err);
@@ -74,7 +74,7 @@ const ExpensesPage = () => {
             setLoadingInsight(false);
         }
     }
-  }, [loading, dataVersion]); // Depends on dataVersion to refresh
+  }, [loading, dataVersion]); 
 
   // --- Calculations (useMemo Hooks) ---
   const totalExpense = useMemo(() => {
@@ -107,12 +107,12 @@ const ExpensesPage = () => {
 
   // --- Handler for Adding Expense ---
   const handleAddExpense = (newExpenseFromServer) => {
-     // CRITICAL FIX: Increment dataVersion to force re-fetch from API
+     // Increment dataVersion to force re-fetch from API
      setDataVersion(prev => prev + 1);
      setIsModalOpen(false); // Close modal
   };
 
-  // --- Placeholder Handlers for Controls ---
+  // ... (Other Handlers remain the same) ...
   const handleDateFilterClick = () => { setIsDateModalOpen(true); };
   const handleApplyDateFilter = (start, end) => { setStartDateFilter(start); setEndDateFilter(end); console.log("Date filter applied. Filtered dates:", { start, end }); };
   const handleExportClick = () => { /* ... export logic ... */ };
@@ -189,8 +189,7 @@ const ExpensesPage = () => {
       {isModalOpen && (
         <AddExpenseModal
           onClose={() => setIsModalOpen(false)}
-          // The handler now just closes the modal and forces a data refresh
-          onAddExpense={handleAddExpense} 
+          onAddExpense={handleAddExpense}
           userId={auth.currentUser?.uid} 
         />
       )}
