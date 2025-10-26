@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../AddExpenseModal/AddExpenseModal.css'; 
 
-const API_URL = `${import.meta.env.VITE_BACKEND_API_URL}/budgets`;
+const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL;
+const BUDGETS_API_URL = `${API_BASE_URL}/budgets`;
 
 // CRITICAL: Receive userId prop
 const EditBudgetModal = ({ budgetToEdit, onClose, onBudgetSaved, userId }) => { 
