@@ -115,7 +115,83 @@ const ExpensesPage = () => {
   // ... (Other Handlers remain the same) ...
   const handleDateFilterClick = () => { setIsDateModalOpen(true); };
   const handleApplyDateFilter = (start, end) => { setStartDateFilter(start); setEndDateFilter(end); console.log("Date filter applied. Filtered dates:", { start, end }); };
-  const handleExportClick = () => { /* ... export logic ... */ };
+  // --- Inside src/pages/ExpensesPage/ExpensesPage.jsx ---
+
+// --- Helper function to convert data to CSV ---
+const convertToCSV = (data) => {
+  if (!data || data.length === 0) {
+      return '';
+  }
+  // Define CSV headers
+  const headers = ['ID', 'Date', 'Description', 'Category', 'Amount', 'Tags']; // Added Tags
+  // Map data rows
+  const rows = data.map(expense =>
+      [
+          expense.id || '', // Handle potential missing ID
+          expense.date || '', // Handle potential missing date
+          `"${expense.description?.replace(/"/g, '""') || ''}"`, // Escape quotes in description
+          expense.category || '',
+          expense.amount || 0,
+          `"${expense.tags?.join('; ') || ''}"` // Join tags with semicolon, escape quotes if needed
+      ].join(',') // Join fields with commas
+  );
+  // Join header and rows with newlines
+  return [headers.join(','), ...rows].join('\n');
+};
+// --- End Helper ---
+
+
+// --- Replace your empty handleExportClick with this ---
+const handleExportClick = () => {
+  console.log("Export button clicked."); // Log start
+
+  // Use the currently filtered expenses for export (make sure filteredExpenses is available in scope)
+  const csvData = convertToCSV(filteredExpenses);
+
+  if (!csvData) {
+      console.log("No data found to export.");
+      alert("No data to export.");
+      return;
+  }
+  console.log("CSV Data generated (first 100 chars):", csvData.substring(0, 100) + "...");
+
+  // Create a Blob (binary large object) for the CSV data
+  const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+  console.log("Blob created.");
+
+  // Create a temporary link element
+  const link = document.createElement("a");
+
+  // Check if browser supports the download attribute
+  if (link.download !== undefined) {
+      // Create a URL for the Blob object
+      const url = URL.createObjectURL(blob);
+      console.log("Blob URL created.");
+
+      link.setAttribute("href", url);
+      // Set filename based on current date
+      const filename = `expenses_${new Date().toISOString().split('T')[0]}.csv`;
+      link.setAttribute("download", filename);
+      link.style.visibility = 'hidden'; // Make the link invisible
+      document.body.appendChild(link); // Add link to the document
+
+      console.log("Attempting to click download link...");
+      link.click(); // Simulate a click on the link to trigger download
+      console.log("Download link clicked.");
+
+      // Clean up the temporary link and Blob URL after a short delay
+      setTimeout(() => {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          console.log("Link removed and URL revoked.");
+      }, 100);
+
+  } else {
+      console.error("Download attribute not supported in this browser.");
+      alert("CSV export is not supported in your browser.");
+  }
+};
+// --- End Correct Export Handler ---
 
 
   if (loading) {
