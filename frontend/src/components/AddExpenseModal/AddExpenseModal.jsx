@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import './AddExpenseModal.css';
 import axios from 'axios'; 
 
-const API_URL = `${import.meta.env.VITE_BACKEND_API_URL}/expenses`;
+// CRITICAL: Use the dynamic environment variable
+const API_URL = `${import.meta.env.VITE_BACKEND_API_URL}/expenses`; 
 
 // CRITICAL: Receive userId prop
 const AddExpenseModal = ({ onClose, onAddExpense, userId }) => { 
@@ -17,22 +18,49 @@ const AddExpenseModal = ({ onClose, onAddExpense, userId }) => {
     e.preventDefault();
     setError(''); setLoading(true);
 
-    if (!description || !amount || !date || !category) { setError("Please fill out all fields."); setLoading(false); return; }
-    if (!userId) { setError("Authentication failed. Please log in."); setLoading(false); return; }
+    // 1. Validation Checks
+    if (!description || !amount || !date || !category) { 
+      setError("Please fill out all fields."); 
+      setLoading(false); 
+      return; 
+    }
+    if (!userId) { 
+      setError("Authentication failed. Please log in again."); 
+      setLoading(false); 
+      return; 
+    }
 
+    // 2. Prepare Payload
     const newExpense = {
-      description, amount: parseFloat(amount), date, category,
-      userId: userId, // CRITICAL FIX: Add userId to the payload
+      description, 
+      amount: parseFloat(amount), 
+      date, 
+      category,
+      userId: userId, // CRITICAL: Add userId to the payload
     };
 
     try {
-      const response = await axios.post(API_URL, newExpense);
+      // 3. Send POST request
+      const response = await axios.post(API_URL, newExpense, {
+          // CRITICAL FIX for deployed POST requests: Prevent caching
+          headers: {
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache',
+              'Expires': '0',
+              'Content-Type': 'application/json',
+          }
+      });
+      
       onAddExpense(response.data); 
       onClose(); 
+
     } catch (err) {
       console.error("Error adding expense: ", err);
-      setError(`Failed to add expense. Error: ${err.message}`);
-    } finally { setLoading(false); }
+      // Display a user-friendly error message
+      setError(`Failed to add expense. Check server logs.`);
+    } finally {
+      setLoading(false); 
+    }
   };
 
   return (
