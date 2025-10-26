@@ -8,7 +8,8 @@ import axios from 'axios';
 import { auth } from '../../firebase'; // CRITICAL: Import auth
 
 // Use the correct port for your Node server (e.g., 8081 if you changed it)
-const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL;
+const API_BASE_URL = 'http://localhost:8081/api';
+const EXPENSES_API_URL = `${API_BASE_URL}/expenses`;
 
 const ExpensesPage = () => {
   const [expenses, setExpenses] = useState([]);
@@ -20,8 +21,11 @@ const ExpensesPage = () => {
   const [isDateModalOpen, setIsDateModalOpen] = useState(false); 
   const [startDateFilter, setStartDateFilter] = useState(''); 
   const [endDateFilter, setEndDateFilter] = useState(''); 
+  
+  // CRITICAL FIX: State to force data refresh
+  const [dataVersion, setDataVersion] = useState(0); 
 
-  // --- Fetch Expenses ---
+  // --- Fetch Expenses (Runs on mount and when dataVersion changes) ---
   useEffect(() => {
     setLoading(true);
     const userId = auth.currentUser?.uid; // CRITICAL: Get user ID
@@ -31,27 +35,27 @@ const ExpensesPage = () => {
     const fetchExpenses = async () => {
       try {
         // CRITICAL FIX: Send userId as a query parameter
-        const response = await axios.get(`${API_BASE_URL}?userId=${userId}`); 
+        const response = await axios.get(`${EXPENSES_API_URL}?userId=${userId}`); 
         const sortedExpenses = response.data.sort((a, b) => new Date(b.date) - new Date(a.date));
         setExpenses(sortedExpenses);
       } catch (err) {
         console.error("Error fetching expenses: ", err);
+        setExpenses([]); // Ensure state is explicitly empty on error
       } finally {
         setLoading(false);
       }
     };
     fetchExpenses();
-  }, []); 
+  }, [dataVersion]); // DEPENDENCY ADDED: Runs when data is saved/refreshed
 
   // --- Fetch Timeline Insight ---
   useEffect(() => {
-    const userId = auth.currentUser?.uid; // CRITICAL: Get user ID
+    const userId = auth.currentUser?.uid; 
     if (!userId) { return; }
 
     const fetchTimelineInsight = async () => {
       setLoadingInsight(true);
       try {
-        // CRITICAL FIX: Send userId as a query parameter
         const response = await axios.get(`${API_BASE_URL}/timeline?userId=${userId}`);
         setTimelineInsight(response.data.insight || "Could not generate timeline insight.");
       } catch (err) {
@@ -70,7 +74,7 @@ const ExpensesPage = () => {
             setLoadingInsight(false);
         }
     }
-  }, [expenses, loading]); 
+  }, [loading, dataVersion]); // Depends on dataVersion to refresh
 
   // --- Calculations (useMemo Hooks) ---
   const totalExpense = useMemo(() => {
@@ -80,11 +84,11 @@ const ExpensesPage = () => {
   const categoryBreakdown = useMemo(() => {
     const categories = {};
     expenses.forEach(expense => {
-      const categoryName = expense.category || 'Uncategorized'; // Handle missing category
+      const categoryName = expense.category || 'Uncategorized'; 
       if (!categories[categoryName]) {
         categories[categoryName] = 0;
       }
-      categories[categoryName] += Number(expense.amount) || 0; // Ensure amount is added as number
+      categories[categoryName] += Number(expense.amount) || 0; 
     });
     if (totalExpense === 0) return [];
     return Object.entries(categories).map(([name, amount]) => ({
@@ -95,21 +99,20 @@ const ExpensesPage = () => {
   }, [expenses, totalExpense]);
 
   const filteredExpenses = useMemo(() => {
-    // Basic filtering logic (by search term)
     let list = expenses.filter(expense =>
         expense.description?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    
-    // NOTE: This client-side filtering is only for the UI, NOT the API query.
     return list;
   }, [expenses, searchTerm]);
 
   // --- Handler for Adding Expense ---
   const handleAddExpense = (newExpenseFromServer) => {
-     setExpenses(prevExpenses => [newExpenseFromServer, ...prevExpenses]);
+     // CRITICAL FIX: Increment dataVersion to force re-fetch from API
+     setDataVersion(prev => prev + 1);
+     setIsModalOpen(false); // Close modal
   };
 
-  // ... (Date/Export Handlers remain the same) ...
+  // --- Placeholder Handlers for Controls ---
   const handleDateFilterClick = () => { setIsDateModalOpen(true); };
   const handleApplyDateFilter = (start, end) => { setStartDateFilter(start); setEndDateFilter(end); console.log("Date filter applied. Filtered dates:", { start, end }); };
   const handleExportClick = () => { /* ... export logic ... */ };
@@ -154,7 +157,6 @@ const ExpensesPage = () => {
         <aside className="category-breakdown-section">
           <DashboardCard title="Category Breakdown">
             <div className="category-list">
-              {/* ... (Category Breakdown rendering) ... */}
               {categoryBreakdown.map(category => (
                 <div key={category.name} className="category-item">
                   <div className="category-info">
@@ -187,8 +189,8 @@ const ExpensesPage = () => {
       {isModalOpen && (
         <AddExpenseModal
           onClose={() => setIsModalOpen(false)}
-          onAddExpense={handleAddExpense}
-          // CRITICAL FIX: Pass the userId to the modal
+          // The handler now just closes the modal and forces a data refresh
+          onAddExpense={handleAddExpense} 
           userId={auth.currentUser?.uid} 
         />
       )}
